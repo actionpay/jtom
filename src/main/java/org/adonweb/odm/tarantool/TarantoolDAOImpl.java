@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.List;
 
 /**
+ * Tarantool DAO wrapper
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class TarantoolDAOImpl<T> implements DAO<T> {

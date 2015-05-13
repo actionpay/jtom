@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
+ * Wrapper for tarantool connection based on 1.6 version of tarantool connector
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class TarantoolConnection implements Connection {

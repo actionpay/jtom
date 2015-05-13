@@ -11,5 +11,9 @@ import java.lang.annotation.Target;
 @Target(value = {ElementType.FIELD,ElementType.METHOD})
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface Field {
+    /**
+     * Position of field in data set
+     * @return field position in result data set.
+     */
     int position();
 }

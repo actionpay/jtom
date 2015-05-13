@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
+ * Implementation of tarantool query result
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class TarantoolQueryResult<T> implements QueryResult<T> {

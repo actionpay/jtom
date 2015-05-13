@@ -11,6 +11,14 @@ import java.lang.annotation.Target;
 @Target(value = ElementType.TYPE)
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface Entity {
+    /**
+     * Name of data set (space) for entity
+     * @return data space name
+     */
     String space() default "default";
+    /**
+     * Connection name of storage where entities stores
+     * @return connection name
+     */
     String connection() default "default";
 }
