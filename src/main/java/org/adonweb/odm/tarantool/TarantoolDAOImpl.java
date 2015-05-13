@@ -11,12 +11,12 @@ import java.util.List;
  */
 public class TarantoolDAOImpl<T> implements DAO<T> {
     private Class<? extends T> entityClass;
-    private Map<Integer, java.lang.reflect.Field> fields = new HashMap<Integer, java.lang.reflect.Field>();
+    private Map<Integer, java.lang.reflect.Field> fields = new HashMap<>();
     private Integer fieldsCount =-1;
     private Map<Integer, Map<Integer, java.lang.reflect.Field>> keys = new HashMap<>();
     private Connection link;
     private Integer spaceId;
-    protected static HashMap<Class<?>, DAO> pool = new HashMap<Class<?>, DAO>();
+    protected static HashMap<Class<?>, DAO> pool = new HashMap<>();
 
 
     public static DAO getByClass(Class<?> entityClass) throws Exception {
@@ -63,7 +63,6 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
 
     /**
      * Should be run after link connection created.
-     * @param tarantoolEntity
      */
     private void initSpaceId(Entity tarantoolEntity){
         String space = tarantoolEntity.space();
@@ -88,28 +87,28 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
         }
     }
 
-    public QueryResult find(int index, Object value) {
+    public QueryResult<T> find(int index, Object value) {
         return find(index, value, Integer.MAX_VALUE);
     }
 
-    public QueryResult find(int index, Object value, int limit) {
+    public QueryResult<T> find(int index, Object value, int limit) {
         return find(index, value, limit, 0);
     }
 
-    public QueryResult find(int index, Object value, Integer limit, Integer offset) {
-        List args = Arrays.asList(spaceId, value, index, 0, 0);
+    public QueryResult<T> find(int index, Object value, Integer limit, Integer offset) {
+        List<Object> args = Arrays.asList(spaceId, value, index, 0, 0);
         if (limit >= 0) {
             args.set(3, limit);
             if (offset >= 0) {
                 args.set(4, offset);
             }
         }
-        Object result = ((TarantoolConnection)link).select(spaceId, index, value, offset, limit, 0);
-        return new TarantoolQueryResult(entityClass,(List<T>) result);
+        List result = ((TarantoolConnection)link).select(spaceId, index, value, offset, limit, 0);
+        return new TarantoolQueryResult<>(entityClass, result);
     }
 
     public QueryResult<T> all() throws Exception {
-        return new TarantoolQueryResult<T>(entityClass,((TarantoolConnection)link).select(spaceId, 0, Collections.singletonList(0), 0, Integer.MAX_VALUE, 2));
+        return new TarantoolQueryResult<>(entityClass,((TarantoolConnection)link).select(spaceId, 0, Collections.singletonList(0), 0, Integer.MAX_VALUE, 2));
     }
 
     public QueryResult<T> select(Object key) throws Exception {
@@ -119,20 +118,20 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
 
 
     public QueryResult<T> select(Integer index, Object key) throws Exception {
-        QueryResult objects;
+        QueryResult<T> objects;
         if (index == null)
-            objects = find(0, Arrays.asList(key));
+            objects = find(0, Collections.singletonList(key));
         else
         if (!(key instanceof List)) {
-            objects = find(index, Arrays.asList(key));
+            objects = find(index, Collections.singletonList(key));
         } else
-            objects = find(index, (List) key);
+            objects = find(index, key);
 
         return objects;
     }
 
     private List entityToList(T entity) throws IllegalAccessException {
-        List<Object> data = new ArrayList<Object>();
+        List<Object> data = new ArrayList<>();
         for (int i=0;i< fieldsCount;i++)
             if (fields.containsKey(i))
                 data.add(fields.get(i).get(entity));
@@ -142,14 +141,14 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
     }
 
     private List indexToList(Integer index, T entity) throws IllegalAccessException {
-        List<Object> data = new ArrayList<Object>();
+        List<Object> data = new ArrayList<>();
         Map<Integer, java.lang.reflect.Field> keysMap =  keys.get(index);
         for (Integer key:keysMap.keySet())
             data.add(keysMap.get(key).get(entity));
         return data;
     }
 
-    private static Number narrovingNumberConversion(Class<? extends Number> outputType, Number value) throws Exception {
+    private static Number narrovingNumberConversion(Class<?> outputType, Number value) throws Exception {
         if(value == null) {
             return null;
         }
@@ -176,14 +175,14 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
     }
 
     public List<T> convertPlainListToObjectList(List objects) throws Exception {
-        List<T> result = new ArrayList<T>();
+        List<T> result = new ArrayList<>();
         for (Object obj : objects) {
-            T instance = (T) (entityClass.getConstructor().newInstance());
+            T instance = entityClass.getConstructor().newInstance();
             for (java.lang.reflect.Field field:fields.values())
             {
                 Object fieldValue = (((List) (obj)).get(field.getDeclaredAnnotation(Field.class).position()));
                 if (fieldValue instanceof Number && Number.class.isAssignableFrom(field.getType()))
-                    field.set(instance,narrovingNumberConversion((Class<? extends Number>)field.getType(),(Number)fieldValue));
+                    field.set(instance,narrovingNumberConversion(field.getType(),(Number)fieldValue));
                 else
                     field.set(instance,fieldValue);
             }
@@ -193,15 +192,15 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
     }
 
     public QueryResult<T> insert(T entity) throws Exception {
-        return new TarantoolQueryResult<T>(entityClass,((TarantoolConnection)link).insert(spaceId, entityToList(entity)));
+        return new TarantoolQueryResult<>(entityClass,((TarantoolConnection)link).insert(spaceId, entityToList(entity)));
     }
 
     public QueryResult<T> save(T entity) throws Exception {
-        return new TarantoolQueryResult<T>(entityClass,((TarantoolConnection)link).replace(spaceId, entityToList(entity)));
+        return new TarantoolQueryResult<>(entityClass,((TarantoolConnection)link).replace(spaceId, entityToList(entity)));
     }
 
     public QueryResult<T> delete(T entity) throws IllegalAccessException {
-        return new TarantoolQueryResult<T>(entityClass,((TarantoolConnection)link).delete(spaceId, indexToList(0, entity)));
+        return new TarantoolQueryResult<>(entityClass,((TarantoolConnection)link).delete(spaceId, indexToList(0, entity)));
     }
 
 

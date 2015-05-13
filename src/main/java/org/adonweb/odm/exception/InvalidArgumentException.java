@@ -1,7 +1,7 @@
 package org.adonweb.odm.exception;
 
 /**
- * Created by Artur Khakimov on 12.05.2015.
+ * @author Artur Khakimov <djion@ya.ru>
  */
 public class InvalidArgumentException extends Exception {
 }
