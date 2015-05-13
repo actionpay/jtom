@@ -108,17 +108,17 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
         return new TarantoolQueryResult(entityClass,(List<T>) result);
     }
 
-    public QueryResult all() throws Exception {
+    public QueryResult<T> all() throws Exception {
         return new TarantoolQueryResult<T>(entityClass,((TarantoolConnection)link).select(spaceId, 0, Collections.singletonList(0), 0, Integer.MAX_VALUE, 2));
     }
 
-    public QueryResult select(Object key) throws Exception {
+    public QueryResult<T> select(Object key) throws Exception {
         return select(0, key);
     }
 
 
 
-    public QueryResult select(Integer index, Object key) throws Exception {
+    public QueryResult<T> select(Integer index, Object key) throws Exception {
         QueryResult objects;
         if (index == null)
             objects = find(0, Arrays.asList(key));
@@ -192,15 +192,15 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
         return result;
     }
 
-    public QueryResult insert(T entity) throws Exception {
+    public QueryResult<T> insert(T entity) throws Exception {
         return new TarantoolQueryResult<T>(entityClass,((TarantoolConnection)link).insert(spaceId, entityToList(entity)));
     }
 
-    public QueryResult save(T entity) throws Exception {
+    public QueryResult<T> save(T entity) throws Exception {
         return new TarantoolQueryResult<T>(entityClass,((TarantoolConnection)link).replace(spaceId, entityToList(entity)));
     }
 
-    public QueryResult delete(T entity) throws IllegalAccessException {
+    public QueryResult<T> delete(T entity) throws IllegalAccessException {
         return new TarantoolQueryResult<T>(entityClass,((TarantoolConnection)link).delete(spaceId, indexToList(0, entity)));
     }
 
