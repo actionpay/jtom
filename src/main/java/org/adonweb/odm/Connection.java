@@ -1,8 +1,7 @@
 package org.adonweb.odm;
 
-import java.io.IOException;
-
 /**
+ *
  * @author Artur Khakimov <djion@ya.ru>
  */
 public interface Connection {

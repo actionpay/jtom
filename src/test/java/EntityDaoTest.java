@@ -13,10 +13,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public class EntityDaoTest {
-    private String host = "192.168.13.180";
+    private String host = "localhost";
     private Integer port = 3302;
-    private String login = "remarketeer";
-    private String password = "2kTNifmAIswtXkr";
+    private String login = "user";
+    private String password = "password";
     String entity = "test_entity";
     String luaCreateTesterScript = "box.schema.space.create('test_entity')\n" +
             "      box.space." + entity + ":create_index('primary', {type = 'hash', parts = {1, 'NUM'}})\n";
@@ -64,6 +64,7 @@ public class EntityDaoTest {
         /*for (MockEntity entity: dao.all().getAsObjectList())
             System.out.println(entity+" "+entity.getClass());*/
         Long endSelect = System.nanoTime();
+        ConnectionPool.done();
         System.out.println("Insert Time: " + String.format("%.6f",(startSelect - startInsert) / 1000000000.));
         System.out.println("Select Time: " + String.format("%.6f", (endSelect - startSelect) / 1000000000.));
     }

@@ -34,4 +34,7 @@ public class ConnectionPool {
         return pool.get(name);
     }
 
+    public static void done() {
+        pool.values().stream().forEach(connection ->{try {connection.disconnect();} catch (Exception ignored) {}});
+    }
 }
