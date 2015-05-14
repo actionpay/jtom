@@ -1,18 +1,20 @@
-package org.adonweb.odm.tarantool;
+package net.actionpay.jtom.tarantool;
 
-import org.adonweb.odm.QueryResult;
+import net.actionpay.jtom.QueryResult;
 
 import java.util.Iterator;
 import java.util.List;
 
 /**
  * Implementation of tarantool query result
+ *
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class TarantoolQueryResult<T> implements QueryResult<T> {
     Class<? extends T> entityClass;
     List result;
-    public TarantoolQueryResult(Class<? extends T>entityClass, List result) {
+
+    public TarantoolQueryResult(Class<? extends T> entityClass, List result) {
         this.entityClass = entityClass;
         this.result = result;
     }
@@ -24,7 +26,8 @@ public class TarantoolQueryResult<T> implements QueryResult<T> {
 
     @Override
     public List<T> getAsObjectList() throws Exception {
-        return ((TarantoolDAOImpl<T>)TarantoolDAOImpl.getByClass(entityClass)).convertPlainListToObjectList(result);
+        return ((TarantoolDAOImpl<T>) TarantoolDAOImpl.getByClass(entityClass))
+                .convertPlainListToObjectList(result);
     }
 
     @Override
@@ -34,6 +37,7 @@ public class TarantoolQueryResult<T> implements QueryResult<T> {
 
     @Override
     public Iterator<T> getObjectIterator() throws Exception {
-        return ((TarantoolDAOImpl<T>)TarantoolDAOImpl.getByClass(entityClass)).convertPlainListToObjectList(result).iterator();
+        return ((TarantoolDAOImpl<T>) TarantoolDAOImpl.getByClass(entityClass))
+                .convertPlainListToObjectList(result).iterator();
     }
 }

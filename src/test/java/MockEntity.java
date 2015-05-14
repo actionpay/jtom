@@ -1,28 +1,29 @@
-import org.adonweb.odm.Entity;
-import org.adonweb.odm.Field;
-import org.adonweb.odm.Key;
+import net.actionpay.jtom.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Temp on 12.05.2015.
  */
 @Entity(space="test_entity"
         , connection = "keeper")
+@Indexes(value={@Index(indexType = IndexType.INDEX_TYPE_HASH, unique = true, name="primary")
+        ,@Index(indexType = IndexType.INDEX_TYPE_TREE, unique =  false, name="secondary")})
 public class MockEntity {
-    @Key(index=0,position = 0)
+    @Key(index=0,position = 1)
     @Field(position = 0)
     private Integer id;
 
     @Field(position = 1)
-    private Integer f1;
+    private String f1;
 
+    @Key(index=1,position = 11)
     @Field(position = 10)
     private Integer f2;
 
-    @Field(position = 7)
-    private Integer f7;
-
     @Field(position = 3)
-    private Integer f3;
+    private Map f3;
 
     @Field(position = 4)
     private Integer f4;
@@ -33,6 +34,9 @@ public class MockEntity {
     @Field(position = 6)
     private Integer f6;
 
+    @Field(position = 7)
+    private List f7;
+
     public Integer getId() {
         return id;
     }
@@ -42,11 +46,11 @@ public class MockEntity {
         return this;
     }
 
-    public Integer getF1() {
+    public String getF1() {
         return f1;
     }
 
-    public MockEntity setF1(Integer f1) {
+    public MockEntity setF1(String f1) {
         this.f1 = f1;
         return this;
     }
@@ -60,20 +64,20 @@ public class MockEntity {
         return this;
     }
 
-    public Integer getF7() {
+    public List getF7() {
         return f7;
     }
 
-    public MockEntity setF7(Integer f7) {
+    public MockEntity setF7(List f7) {
         this.f7 = f7;
         return this;
     }
 
-    public Integer getF3() {
+    public Map getF3() {
         return f3;
     }
 
-    public MockEntity setF3(Integer f3) {
+    public MockEntity setF3(Map f3) {
         this.f3 = f3;
         return this;
     }

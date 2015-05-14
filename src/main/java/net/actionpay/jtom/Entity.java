@@ -1,4 +1,4 @@
-package org.adonweb.odm;
+package net.actionpay.jtom;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -13,11 +13,14 @@ import java.lang.annotation.Target;
 public @interface Entity {
     /**
      * Name of data set (space) for entity
+     *
      * @return data space name
      */
     String space() default "default";
+
     /**
      * Connection name of storage where entities stores
+     *
      * @return connection name
      */
     String connection() default "default";

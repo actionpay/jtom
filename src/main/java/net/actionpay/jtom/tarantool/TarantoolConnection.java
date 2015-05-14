@@ -1,6 +1,6 @@
-package org.adonweb.odm.tarantool;
+package net.actionpay.jtom.tarantool;
 
-import org.adonweb.odm.Connection;
+import net.actionpay.jtom.Connection;
 import org.tarantool.TarantoolConnection16Impl;
 
 import java.io.IOException;
@@ -8,6 +8,7 @@ import java.util.List;
 
 /**
  * Wrapper for tarantool connection based on 1.6 version of tarantool connector
+ *
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class TarantoolConnection implements Connection {
@@ -16,8 +17,8 @@ public class TarantoolConnection implements Connection {
 
     @Override
     public void connect(String host, int port, String user, String password) throws IOException {
-        connection = new TarantoolConnection16Impl(host,port);
-        connection.auth(user,password);
+        connection = new TarantoolConnection16Impl(host, port);
+        connection.auth(user, password);
     }
 
     @Override

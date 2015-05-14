@@ -1,4 +1,4 @@
-package org.adonweb.odm;
+package net.actionpay.jtom;
 
 /**
  * @author Artur Khakimov <djion@ya.ru>
@@ -7,24 +7,27 @@ public interface DAO<T> {
 
     /**
      * Return objects by key
-     * @param key key for select
+     *
+     * @param key key for get
      * @return result QueryResult with object
      * @throws Exception depends on Connection
      */
-    QueryResult<T> select(Object key) throws Exception;
+    QueryResult<T> get(Object key) throws Exception;
 
-    QueryResult<T> select(Integer index, Object key) throws Exception;
+    QueryResult<T> get(Integer index, Object key) throws Exception;
 
     /**
      * Insert entity to storage
-     * @param entity for insert
+     *
+     * @param entity for add
      * @return result, depends on Connection
      * @throws Exception depends on Connection
      */
-    QueryResult<T> insert(T entity) throws Exception;
+    QueryResult<T> add(T entity) throws Exception;
 
     /**
      * Save/Update entity (by internal key)
+     *
      * @param entity for save/update
      * @return result, depends on Connection
      * @throws Exception depends on Connection
@@ -33,6 +36,7 @@ public interface DAO<T> {
 
     /**
      * Remove entity (by internal key)
+     *
      * @param entity for remove
      * @return result, depends on Connection
      * @throws Exception depends on Connection
@@ -41,8 +45,17 @@ public interface DAO<T> {
 
     /**
      * Return full set of entities
+     *
      * @return QueryResult with data
      * @throws Exception depends on Connection
      */
     QueryResult<T> all() throws Exception;
+
+    QueryResult<T> createSpace() throws Exception;
+
+    QueryResult<T> dropSpace() throws Exception;
+
+    QueryResult<T> dropById();
+
+    QueryResult<T> getById();
 }

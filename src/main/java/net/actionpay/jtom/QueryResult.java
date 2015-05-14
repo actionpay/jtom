@@ -1,4 +1,4 @@
-package org.adonweb.odm;
+package net.actionpay.jtom;
 
 import java.util.Iterator;
 import java.util.List;
@@ -8,6 +8,7 @@ import java.util.List;
  * @author Artur Khakimov <djion@ya.ru>
  */
 public interface QueryResult<T>{
+
     /**
      * Return plain data list of query result
      * @return list of plain data

@@ -1,71 +1,95 @@
-/**
- * Created by Temp on 12.05.2015.
- */
-
-import org.adonweb.odm.exception.InvalidArgumentException;
-import org.adonweb.odm.DAO;
-import org.adonweb.odm.ConnectionPool;
-import org.adonweb.odm.ConnectionInfo;
-import org.adonweb.odm.tarantool.*;
+import net.actionpay.jtom.DAO;
+import net.actionpay.jtom.ConnectionPool;
+import net.actionpay.jtom.ConnectionInfo;
+import net.actionpay.jtom.tarantool.TarantoolConnection;
+import net.actionpay.jtom.tarantool.TarantoolDAOImpl;
 import org.junit.*;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
+/**
+ * @author Artur Khakimov <djion@ya.ru>
+ */
 public class EntityDaoTest {
-    private String host = "localhost";
-    private Integer port = 3302;
-    private String login = "user";
-    private String password = "password";
-    String entity = "test_entity";
-    String luaCreateTesterScript = "box.schema.space.create('test_entity')\n" +
-            "      box.space." + entity + ":create_index('primary', {type = 'hash', parts = {1, 'NUM'}})\n";
-    String luaDropTesterScript = "box.space." + entity + ":drop()";
+    static private String host = "localhost";
+    static private Integer port = 3302;
+    static private String login = "login";
+    static private String password = "password";
 
-    public List createTesterSpace() throws Exception{
-        return ((TarantoolConnection) ConnectionPool.connection("keeper")).eval(luaCreateTesterScript);
+    @BeforeClass
+    static public void prepare() throws Exception {
+        ConnectionPool.init(Collections.singletonList(
+                new ConnectionInfo(TarantoolConnection.class, "keeper", host, port, login, password)));
+        TarantoolDAOImpl.getByClass(MockEntity.class).createSpace();
     }
 
-    public List dropTesterSpace() throws Exception {
-        return ((TarantoolConnection) ConnectionPool.connection("keeper")).eval(luaDropTesterScript);
+    @AfterClass
+    static public void done() throws Exception {
+        TarantoolDAOImpl.getByClass(MockEntity.class).dropSpace();
+        ConnectionPool.done();
+    }
+
+    @Test
+    public void testInsertSelectTarantool() throws Exception {
+        System.out.println("insert/select test");
+        DAO<MockEntity> dao = TarantoolDAOImpl.getByClass(MockEntity.class);
+        MockEntity entity = new MockEntity();
+        Map f3 = new HashMap<>();
+        f3.put("key", "value");
+        entity.setId(0)
+                .setF1("1")//integer string test
+                .setF2(2)//integer test
+                .setF3(f3)//map test
+                .setF7(Arrays.asList("1", 1, "a"));//array test
+        dao.save(entity);
+        entity = dao.get(0, Collections.singletonList(0)).getObjectIterator().next();
+        Assert.assertEquals(entity.getF1(), "1");
+        Assert.assertEquals(entity.getF2(), Integer.valueOf(2));
+        Assert.assertEquals(entity.getF3().get("key"), "value");
+        Assert.assertEquals(entity.getF7().get(0), "1");
+        Assert.assertEquals(entity.getF7().get(1), 1);
+        Assert.assertEquals(entity.getF7().get(2), "a");
+        System.out.println("end insert/select test");
+    }
+
+    @Test
+    public void test2() {
+
     }
 
     @Test
     public void test() throws Exception {
-        ConnectionPool.init(Arrays.asList(new ConnectionInfo(TarantoolConnection.class, "keeper", host, port, login, password)));
-        try {
-            dropTesterSpace();
-        }catch (Exception ignored){}
-        createTesterSpace();
+        System.out.println("test");
         DAO<MockEntity> dao = TarantoolDAOImpl.getByClass(MockEntity.class);
-
+        Integer count = 10;
         Long startInsert = System.nanoTime();
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < count; i++) {
             MockEntity entityEntity = new MockEntity();
             entityEntity.setId(i)
-                    .setF1(i * 10000 + 1)
+                    .setF1(String.valueOf(i * 10000 + 1))
                     .setF2(i * 10000 + 2)
-                    .setF3(i * 10000 + 3)
                     .setF4(i * 10000 + 4)
-                    .setF5( i * 10000 + 5)
-                    .setF6( i * 10000 + 6)
-                    .setF7(i * 10000 + 7);
-            dao.insert(entityEntity);
-            //entityEntity.setF1(i * 1000 + 1);
-            //dao.save(entityEntity);
-            //if (i%2==0)
-//                dao.delete(entityEntity);
+                    .setF5(i * 10000 + 5)
+                    .setF6(i * 10000 + 6)
+            ;
+            dao.add(entityEntity);
         }
         Long startSelect = System.nanoTime();
-        for (int i = 0; i < 10000; i++) {
-            //if (i%2!=0)
-                dao.select(0, Arrays.asList(i/*,i * 10000 + 3*/));
+        for (int i = 0; i < count; i++) {
+
+            MockEntity entity = dao.get(0, Collections.singletonList(i)).getObjectIterator().next();
+            Assert.assertEquals(entity.getF1(), String.valueOf(i * 10000 + 1));
+            Assert.assertEquals(entity.getF2(), (Integer) (i * 10000 + 2));
+            Assert.assertEquals(entity.getF4(), (Integer) (i * 10000 + 4));
+            Assert.assertEquals(entity.getF5(), (Integer) (i * 10000 + 5));
+            Assert.assertEquals(entity.getF6(), (Integer) (i * 10000 + 6));
+            dao.delete(entity);
         }
-        /*for (MockEntity entity: dao.all().getAsObjectList())
-            System.out.println(entity+" "+entity.getClass());*/
         Long endSelect = System.nanoTime();
-        ConnectionPool.done();
-        System.out.println("Insert Time: " + String.format("%.6f",(startSelect - startInsert) / 1000000000.));
+
+
+        System.out.println("Insert Time: " + String.format("%.6f", (startSelect - startInsert) / 1000000000.));
         System.out.println("Select Time: " + String.format("%.6f", (endSelect - startSelect) / 1000000000.));
+        System.out.println("end test");
     }
 }

@@ -1,7 +1,8 @@
-package org.adonweb.odm;
+package net.actionpay.jtom;
 
 /**
  * Connection info contain information for @see ConnectionPool to create connection
+ *
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class ConnectionInfo {
@@ -14,14 +15,16 @@ public class ConnectionInfo {
 
     /**
      * Connection info constructor
+     *
      * @param connectionClass Class of connection we will create with this connection info
-     * @param name Name of connection to have access to it
-     * @param host connection host
-     * @param port connection port
-     * @param user auth username
-     * @param password auth password
+     * @param name            Name of connection to have access to it
+     * @param host            connection host
+     * @param port            connection port
+     * @param user            auth username
+     * @param password        auth password
      */
-    public ConnectionInfo(Class<? extends Connection> connectionClass, String name, String host, Integer port, String user, String password) {
+    public ConnectionInfo(Class<? extends Connection> connectionClass
+            , String name, String host, Integer port, String user, String password) {
         this.connectionClass = connectionClass;
         this.name = name;
         this.host = host;
@@ -32,6 +35,7 @@ public class ConnectionInfo {
 
     /**
      * Get connection class
+     *
      * @return connection class, can be used to create reflection connection
      */
     public Class<? extends Connection> getConnectionClass() {
@@ -49,6 +53,7 @@ public class ConnectionInfo {
 
     /**
      * Connection name getter
+     *
      * @return name
      */
     public String getName() {
@@ -57,6 +62,7 @@ public class ConnectionInfo {
 
     /**
      * Connection host getter
+     *
      * @return host
      */
     public String getHost() {
@@ -65,6 +71,7 @@ public class ConnectionInfo {
 
     /**
      * Connection port getter
+     *
      * @return port
      */
     public Integer getPort() {
@@ -73,6 +80,7 @@ public class ConnectionInfo {
 
     /**
      * Connection user getter
+     *
      * @return user
      */
     public String getUser() {
@@ -81,6 +89,7 @@ public class ConnectionInfo {
 
     /**
      * Connection password getter
+     *
      * @return password
      */
     public String getPassword() {
@@ -89,6 +98,7 @@ public class ConnectionInfo {
 
     /**
      * Connection name setter
+     *
      * @return this
      */
     public ConnectionInfo setName(String name) {
@@ -98,6 +108,7 @@ public class ConnectionInfo {
 
     /**
      * Connection host setter
+     *
      * @return this
      */
     public ConnectionInfo setHost(String host) {
@@ -107,6 +118,7 @@ public class ConnectionInfo {
 
     /**
      * Connection port setter
+     *
      * @return this
      */
     public ConnectionInfo setPort(Integer port) {
@@ -116,6 +128,7 @@ public class ConnectionInfo {
 
     /**
      * Connection user setter
+     *
      * @return this
      */
     public ConnectionInfo setUser(String user) {
@@ -125,6 +138,7 @@ public class ConnectionInfo {
 
     /**
      * Connection password setter
+     *
      * @return this
      */
     public ConnectionInfo setPassword(String password) {

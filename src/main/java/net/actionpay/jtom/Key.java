@@ -1,4 +1,4 @@
-package org.adonweb.odm;
+package net.actionpay.jtom;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -8,12 +8,18 @@ import java.lang.annotation.Target;
 /**
  * @author Artur Khakimov <djion@ya.ru>
  */
-@Target(value = {ElementType.FIELD,ElementType.METHOD})
+@Target(value = ElementType.FIELD)
 @Retention(value = RetentionPolicy.RUNTIME)
-public @interface Field {
+public @interface Key {
     /**
-     * Position of field in data set
-     * @return field position in result data set.
+     * Index for this key
+     * @return index
+     */
+    int index();
+
+    /**
+     * Position in index for this key
+     * @return position
      */
     int position();
 }
