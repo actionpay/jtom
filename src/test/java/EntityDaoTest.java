@@ -83,7 +83,7 @@ public class EntityDaoTest {
             Assert.assertEquals(entity.getF4(), (Integer) (i * 10000 + 4));
             Assert.assertEquals(entity.getF5(), (Integer) (i * 10000 + 5));
             Assert.assertEquals(entity.getF6(), (Integer) (i * 10000 + 6));
-            dao.delete(entity);
+            dao.drop(entity);
         }
         Long endSelect = System.nanoTime();
 

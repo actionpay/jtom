@@ -12,7 +12,7 @@ import java.util.List;
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class TarantoolDAOImpl<T> implements DAO<T> {
-    
+
     private Class<? extends T> entityClass;
     private Map<Integer, java.lang.reflect.Field> fields = new HashMap<>();
     private Integer fieldsCount = -1;
@@ -162,13 +162,14 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
     }
 
     @Override
-    public QueryResult<T> dropById() {
-        return null;
+    public QueryResult<T> dropById(Object id) throws Exception{
+        return new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
+                .delete(spaceId, Arrays.asList(0, id)));
     }
 
     @Override
-    public QueryResult<T> getById() {
-        return null;
+    public QueryResult<T> getById(Object id) throws Exception {
+        return get(id);
     }
 
     public QueryResult<T> get(Object key) throws Exception {
@@ -289,7 +290,7 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
                 .replace(spaceId, entityToList(entity)));
     }
 
-    public QueryResult<T> delete(T entity) throws IllegalAccessException {
+    public QueryResult<T> drop(T entity) throws IllegalAccessException {
         return new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .delete(spaceId, indexToList(0, entity)));
     }

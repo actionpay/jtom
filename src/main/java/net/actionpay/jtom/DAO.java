@@ -14,6 +14,12 @@ public interface DAO<T> {
      */
     QueryResult<T> get(Object key) throws Exception;
 
+    /**
+     * @param index index
+     * @param key   fields values as index key
+     * @return QueryResult with objects equals to index key
+     * @throws Exception
+     */
     QueryResult<T> get(Integer index, Object key) throws Exception;
 
     /**
@@ -41,7 +47,7 @@ public interface DAO<T> {
      * @return result, depends on Connection
      * @throws Exception depends on Connection
      */
-    QueryResult<T> delete(T entity) throws Exception;
+    QueryResult<T> drop(T entity) throws Exception;
 
     /**
      * Return full set of entities
@@ -51,11 +57,35 @@ public interface DAO<T> {
      */
     QueryResult<T> all() throws Exception;
 
+    /**
+     * Create space scheme for Entity
+     *
+     * @return depends on Connection
+     * @throws Exception
+     */
     QueryResult<T> createSpace() throws Exception;
 
+    /**
+     * Drop space scheme for Entity
+     *
+     * @return depends on Connection
+     * @throws Exception
+     */
     QueryResult<T> dropSpace() throws Exception;
 
-    QueryResult<T> dropById();
+    /**
+     * Drop object by id
+     *
+     * @return depends on Connection
+     * @throws Exception
+     */
+    QueryResult<T> dropById(Object id) throws Exception;
 
-    QueryResult<T> getById();
+    /**
+     * Get object by id
+     *
+     * @return depends on Connection
+     * @throws Exception
+     */
+    QueryResult<T> getById(Object id) throws Exception;
 }
