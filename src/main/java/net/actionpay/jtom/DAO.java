@@ -88,4 +88,5 @@ public interface DAO<T> {
      * @throws Exception
      */
     QueryResult<T> getById(Object id) throws Exception;
+
 }

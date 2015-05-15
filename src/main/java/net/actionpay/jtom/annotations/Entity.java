@@ -1,4 +1,4 @@
-package net.actionpay.jtom;
+package net.actionpay.jtom.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

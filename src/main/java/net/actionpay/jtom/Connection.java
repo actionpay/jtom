@@ -30,4 +30,6 @@ public interface Connection {
      * @throws Exception sometimes it's to hard to close closed connections or can be some errors during proccess
      */
     void disconnect() throws Exception;
+
+    default Class<?> daoClass(){return null;};
 }

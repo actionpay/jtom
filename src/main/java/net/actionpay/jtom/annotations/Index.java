@@ -1,4 +1,6 @@
-package net.actionpay.jtom;
+package net.actionpay.jtom.annotations;
+
+import net.actionpay.jtom.IndexType;
 
 import java.lang.annotation.*;
 

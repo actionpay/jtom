@@ -1,8 +1,12 @@
 package net.actionpay.jtom.tarantool;
 
 import net.actionpay.jtom.*;
-import net.actionpay.jtom.Field;
+import net.actionpay.jtom.annotations.*;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
 
@@ -11,7 +15,7 @@ import java.util.List;
  *
  * @author Artur Khakimov <djion@ya.ru>
  */
-public class TarantoolDAOImpl<T> implements DAO<T> {
+public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
 
     private Class<? extends T> entityClass;
     private Map<Integer, java.lang.reflect.Field> fields = new HashMap<>();
@@ -21,8 +25,10 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
     private Connection link;
     private String space;
     private Integer spaceId;
+    private Object emptyKey;
     protected static HashMap<Class<?>, DAO> pool = new HashMap<>();
-
+    private List<Class<? extends Annotation>> handlers = Arrays.asList(AfterAdd.class, AfterDrop.class, AfterGet.class, AfterSave.class,
+            BeforeAdd.class, BeforeGet.class, BeforeDrop.class, BeforeSave.class);
 
     public static DAO getByClass(Class<?> entityClass) throws Exception {
         pool.putIfAbsent(entityClass, new TarantoolDAOImpl<>(entityClass));
@@ -33,7 +39,13 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
         if (!((Number.class.isAssignableFrom(fClass))
                 || String.class.isAssignableFrom(fClass)
                 || Map.class.isAssignableFrom(fClass)
-                || List.class.isAssignableFrom(fClass)))
+                || List.class.isAssignableFrom(fClass)
+                || Boolean.class.isAssignableFrom(fClass)
+                || double.class.isAssignableFrom(fClass)
+                || long.class.isAssignableFrom(fClass)
+                || float.class.isAssignableFrom(fClass)
+                || boolean.class.isAssignableFrom(fClass)
+                || int.class.isAssignableFrom(fClass)))
             throw new Exception("Class " + fClass + " not supported by Tarantool");
     }
 
@@ -50,6 +62,13 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
         }
     }
 
+    /**
+     * Save key annotated field for internal uses
+     *
+     * @param key   key annotation
+     * @param field field with key annotation
+     * @throws Exception if 2 keys have same position and same index
+     */
     private void keyStore(Key key, java.lang.reflect.Field field) throws Exception {
         if (key != null) {
             Integer index = key.index();
@@ -63,7 +82,9 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
     }
 
     /**
-     * Should be run after link connection created.
+     * Init space id code if space exists
+     *
+     * @throws Exception if some Tarantool magic don't work
      */
     private void initSpaceId() throws Exception {
 
@@ -74,8 +95,13 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
 
     }
 
-    protected TarantoolDAOImpl(Class<? extends T> entityClass) throws Exception {
-        this.entityClass = entityClass;
+    /**
+     * Process Entity, Indexes, Key, Field annotations, try to get space Id,
+     * establish connection if not exist and set link to connection
+     *
+     * @throws Exception
+     */
+    private void init() throws Exception {
         Entity tEntityAnnotation = entityClass.getDeclaredAnnotation(Entity.class);
         if (null == tEntityAnnotation)
             throw new Exception("Entity annotation is not set for class " + entityClass.getName());
@@ -84,7 +110,6 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
             throw new Exception("Indexes annotation is not set for class " + entityClass.getName());
         indexStore(indexes);
         link = ConnectionPool.connection(tEntityAnnotation.connection());
-
         for (java.lang.reflect.Field field : entityClass.getDeclaredFields()) {
             Field tarantoolField = field.getDeclaredAnnotation(Field.class);
             Key key = field.getDeclaredAnnotation(Key.class);
@@ -93,10 +118,41 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
                         + " should have annotation @" + Field.class.getName());
             fieldStore(tarantoolField, field);
             keyStore(key, field);
-
         }
+        emptyKey = new ArrayList<>();
+        keys.get(0).keySet().stream().sorted().forEach(key -> {
+            try {
+                Class<?> field = keys.get(0).get(key).getType();
+                //todo: dirty move
+                if (Number.class.isAssignableFrom(field))
+                    ((List) emptyKey).add(field.getConstructors()[0].newInstance(0));
+                else
+                    ((List) emptyKey).add(field.newInstance());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
         space = tEntityAnnotation.space();
         initSpaceId();
+
+        initHandlers();
+
+    }
+
+    private void initHandlers() throws Exception {
+        for (Method method : entityClass.getDeclaredMethods())
+            for (Class<? extends Annotation> obj : handlers) {
+                if (method.isAnnotationPresent(obj)) {
+                    if (!Modifier.isStatic(method.getModifiers()))
+                        throw new Exception("Handler method `"+method.getName()+"` should be static.");
+                    registerHandler(obj, method);
+                }
+            }
+    }
+
+    protected TarantoolDAOImpl(Class<? extends T> entityClass) throws Exception {
+        this.entityClass = entityClass;
+        init();
     }
 
     private void indexStore(Indexes indexes) {
@@ -126,15 +182,17 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
     }
 
     public QueryResult<T> all() throws Exception {
-        return new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
-                .select(spaceId, 0, Collections.singletonList(0), 0, Integer.MAX_VALUE, 2));
+        callHandler(BeforeGet.class, this);
+        TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
+                .select(spaceId, 0, emptyKey, 0, Integer.MAX_VALUE, 2));
+        callHandler(AfterGet.class, this);
+        return result;
     }
 
-    @Override
-    public QueryResult<T> createSpace() throws Exception {
+
+    String buildSpaceCreateEvalExpression() throws Exception {
         StringBuilder query = new StringBuilder();
         query.append("box.schema.space.create('").append(space).append("')\n");
-
         for (Integer indexId : indexMap.keySet()) {
             Index index = indexMap.get(indexId);
             query.append("box.space.")
@@ -145,12 +203,24 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
                     .append("unique = ").append(String.valueOf(index.unique())).append(" , parts = {");
             for (Integer id : keys.get(indexId).keySet()) {
                 java.lang.reflect.Field field = keys.get(indexId).get(id);
-                query.append(id).append(", '").append(typeToKeyType(field.getType())).append("'");
+                query.append(id).append(", '").append(typeToKeyType(field.getType())).append("', ");
             }
             query.append("}})\n");
         }
+        System.out.println(query.toString());
+        return query.toString();
+    }
+
+    /**
+     * Create space for Entity and try to set space Id
+     *
+     * @return empty QueryResult if all is ok
+     * @throws Exception
+     */
+    @Override
+    public QueryResult<T> createSpace() throws Exception {
         QueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
-                .eval(query.toString()));
+                .eval(buildSpaceCreateEvalExpression()));
         initSpaceId();
         return result;
     }
@@ -162,9 +232,12 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
     }
 
     @Override
-    public QueryResult<T> dropById(Object id) throws Exception{
-        return new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
+    public QueryResult<T> dropById(Object id) throws Exception {
+        callHandler(BeforeDrop.class, this);
+        TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .delete(spaceId, Arrays.asList(0, id)));
+        callHandler(AfterDrop.class, this);
+        return result;
     }
 
     @Override
@@ -225,42 +298,39 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
 
 
     String typeToKeyType(Class<?> type) throws Exception {
-        if (Number.class.isAssignableFrom(type)) {
+        if (Number.class.isAssignableFrom(type) || type.equals(double.class))
             return "NUM";
-        }
-        if (String.class.isAssignableFrom(type)) {
+        if (String.class.isAssignableFrom(type))
             return "STR";
-        }
-        if (List.class.isAssignableFrom(type)) {
+        if (List.class.isAssignableFrom(type))
             return "ARRAY";
-        }
         throw new Exception();
 
     }
 
     private static Number narrovingNumberConversion(Class<?> outputType, Number value) throws Exception {
-        if (value == null) {
+        if (value == null)
             return null;
-        }
-        if (Byte.class.equals(outputType)) {
+
+        if (Byte.class.equals(outputType))
             return value.byteValue();
-        }
-        if (Short.class.equals(outputType)) {
+
+        if (Short.class.equals(outputType))
             return value.shortValue();
-        }
-        if (Integer.class.equals(outputType)) {
+
+        if (Integer.class.equals(outputType))
             return value.intValue();
-        }
-        if (Long.class.equals(outputType)) {
+
+        if (Long.class.equals(outputType))
             return value.longValue();
-        }
-        if (Float.class.equals(outputType)) {
+
+        if (Float.class.equals(outputType))
             return value.floatValue();
-        }
-        if (Double.class.equals(outputType)) {
+
+        if (Double.class.equals(outputType))
             return value.doubleValue();
-        }
-        throw new Exception();
+
+        throw new Exception("output type is not number type");
 
     }
 
@@ -273,7 +343,12 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
                 if (fieldValue instanceof Number && Number.class.isAssignableFrom(field.getType()))
                     field.set(instance, narrovingNumberConversion(field.getType(), (Number) fieldValue));
                 else
-                    field.set(instance, fieldValue);
+                    try {
+                        field.set(instance, fieldValue);
+                    } catch (Exception ex) {
+                        System.out.println(field.getName() + ":  " + fieldValue);
+                        throw ex;
+                    }
             }
             result.add(instance);
         }
@@ -281,18 +356,27 @@ public class TarantoolDAOImpl<T> implements DAO<T> {
     }
 
     public QueryResult<T> add(T entity) throws Exception {
-        return new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
+        callHandler(BeforeAdd.class, this);
+        TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .insert(spaceId, entityToList(entity)));
+        callHandler(AfterSave.class, this);
+        return result;
     }
 
     public QueryResult<T> save(T entity) throws Exception {
-        return new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
+        callHandler(BeforeSave.class, this);
+        TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .replace(spaceId, entityToList(entity)));
+        callHandler(AfterSave.class, this);
+        return result;
     }
 
-    public QueryResult<T> drop(T entity) throws IllegalAccessException {
-        return new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
+    public QueryResult<T> drop(T entity) throws IllegalAccessException, InvocationTargetException {
+        callHandler(BeforeDrop.class, this);
+        TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .delete(spaceId, indexToList(0, entity)));
+        callHandler(AfterDrop.class, this);
+        return result;
     }
 
 
