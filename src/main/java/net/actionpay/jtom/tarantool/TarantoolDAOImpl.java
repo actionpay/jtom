@@ -145,6 +145,8 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
                 if (method.isAnnotationPresent(obj)) {
                     if (!Modifier.isStatic(method.getModifiers()))
                         throw new Exception("Handler method `"+method.getName()+"` should be static.");
+                    if (method.getParameterTypes().length!=1)
+                        throw new Exception("Handler method `"+method.getName()+"` should be have 1 argument.");
                     registerHandler(obj, method);
                 }
             }
@@ -182,10 +184,10 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
     }
 
     public QueryResult<T> all() throws Exception {
-        callHandler(BeforeGet.class, this);
+        callHandler(BeforeGet.class, this, null);
         TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .select(spaceId, 0, emptyKey, 0, Integer.MAX_VALUE, 2));
-        callHandler(AfterGet.class, this);
+        callHandler(AfterGet.class, this, result);
         return result;
     }
 
@@ -233,10 +235,10 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
 
     @Override
     public QueryResult<T> dropById(Object id) throws Exception {
-        callHandler(BeforeDrop.class, this);
+        callHandler(BeforeDrop.class, this, id);
         TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .delete(spaceId, Arrays.asList(0, id)));
-        callHandler(AfterDrop.class, this);
+        callHandler(AfterDrop.class, this, result);
         return result;
     }
 
@@ -251,15 +253,16 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
 
 
     public QueryResult<T> get(Integer index, Object key) throws Exception {
-        QueryResult<T> objects;
+        callHandler(BeforeGet.class, this, Arrays.asList(index,key));
+        QueryResult<T> result;
         if (index == null)
-            objects = find(0, Collections.singletonList(key));
+            result = find(0, Collections.singletonList(key));
         else if (!(key instanceof List)) {
-            objects = find(index, Collections.singletonList(key));
+            result = find(index, Collections.singletonList(key));
         } else
-            objects = find(index, key);
-
-        return objects;
+            result = find(index, key);
+        callHandler(AfterGet.class, this, result);
+        return result;
     }
 
     private List entityToList(T entity) throws IllegalAccessException {
@@ -356,26 +359,26 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
     }
 
     public QueryResult<T> add(T entity) throws Exception {
-        callHandler(BeforeAdd.class, this);
+        callHandler(BeforeAdd.class, this, entity);
         TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .insert(spaceId, entityToList(entity)));
-        callHandler(AfterSave.class, this);
+        callHandler(AfterSave.class, this, result);
         return result;
     }
 
     public QueryResult<T> save(T entity) throws Exception {
-        callHandler(BeforeSave.class, this);
+        callHandler(BeforeSave.class, this, entity);
         TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .replace(spaceId, entityToList(entity)));
-        callHandler(AfterSave.class, this);
+        callHandler(AfterSave.class, this, result);
         return result;
     }
 
     public QueryResult<T> drop(T entity) throws IllegalAccessException, InvocationTargetException {
-        callHandler(BeforeDrop.class, this);
+        callHandler(BeforeDrop.class, this, entity);
         TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .delete(spaceId, indexToList(0, entity)));
-        callHandler(AfterDrop.class, this);
+        callHandler(AfterDrop.class, this, result);
         return result;
     }
 
