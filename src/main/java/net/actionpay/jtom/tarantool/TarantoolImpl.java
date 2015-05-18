@@ -2,6 +2,9 @@ package net.actionpay.jtom.tarantool;
 
 import net.actionpay.jtom.*;
 import net.actionpay.jtom.annotations.*;
+import net.actionpay.jtom.exception.InvalidFieldClassException;
+import net.actionpay.jtom.tarantool.exception.WrongTarantoolIndexTypeException;
+import net.actionpay.jtom.tarantool.exception.WrongTarantoolKeyTypeException;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -35,7 +38,7 @@ public class TarantoolImpl<T> extends CallHandler implements DAO<T> {
         return pool.get(entityClass);
     }
 
-    void validateFieldClass(Class<?> fClass) throws Exception {
+    void validateFieldClass(Class<?> fClass) throws InvalidFieldClassException {
         if (!((Number.class.isAssignableFrom(fClass))
                 || String.class.isAssignableFrom(fClass)
                 || Map.class.isAssignableFrom(fClass)
@@ -46,7 +49,7 @@ public class TarantoolImpl<T> extends CallHandler implements DAO<T> {
                 || float.class.isAssignableFrom(fClass)
                 || boolean.class.isAssignableFrom(fClass)
                 || int.class.isAssignableFrom(fClass)))
-            throw new Exception("Class " + fClass + " not supported by Tarantool");
+            throw new InvalidFieldClassException("Class " + fClass + " not supported by Tarantool");
     }
 
     private void fieldStore(Field tarantoolField, java.lang.reflect.Field field) throws Exception {
@@ -291,7 +294,7 @@ public class TarantoolImpl<T> extends CallHandler implements DAO<T> {
     }
 
 
-    String indexTypeToString(IndexType type) throws Exception {
+    String indexTypeToString(IndexType type) throws WrongTarantoolIndexTypeException {
         switch (type) {
             case INDEX_TYPE_HASH:
                 return "HASH";
@@ -302,19 +305,19 @@ public class TarantoolImpl<T> extends CallHandler implements DAO<T> {
             case INDEX_TYPE_TREE:
                 return "TREE";
             default:
-                throw new Exception();
+                throw new WrongTarantoolIndexTypeException();
         }
     }
 
 
-    String typeToKeyType(Class<?> type) throws Exception {
+    String typeToKeyType(Class<?> type) throws WrongTarantoolKeyTypeException {
         if (Number.class.isAssignableFrom(type) || type.equals(double.class))
             return "NUM";
         if (String.class.isAssignableFrom(type))
             return "STR";
         if (List.class.isAssignableFrom(type))
             return "ARRAY";
-        throw new Exception();
+        throw new WrongTarantoolKeyTypeException();
 
     }
 
