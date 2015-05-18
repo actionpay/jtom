@@ -19,6 +19,8 @@ public @interface Key {
 
     /**
      * Position in index for this key
+     *
+     * todo: is it need to replace by String name?
      * @return position
      */
     int position();

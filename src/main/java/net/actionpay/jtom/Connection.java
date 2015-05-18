@@ -31,5 +31,10 @@ public interface Connection {
      */
     void disconnect() throws Exception;
 
+    /**
+     * Return DAO class for this connection
+     *
+     * @return dao class
+     */
     default Class<?> daoClass(){return null;};
 }

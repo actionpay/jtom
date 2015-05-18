@@ -5,6 +5,8 @@ import net.actionpay.jtom.annotations.Entity;
 import java.util.HashMap;
 
 /**
+ * Dao pool
+ *
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class DAOPool {
