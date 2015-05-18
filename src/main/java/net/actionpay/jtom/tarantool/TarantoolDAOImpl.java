@@ -209,7 +209,6 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
             }
             query.append("}})\n");
         }
-        System.out.println(query.toString());
         return query.toString();
     }
 
@@ -352,7 +351,6 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
                     try {
                         field.set(instance, fieldValue);
                     } catch (Exception ex) {
-                        System.out.println(field.getName() + ":  " + fieldValue);
                         throw ex;
                     }
             }

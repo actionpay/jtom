@@ -6,6 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Method annotation to mark methods should be called after entity be added
+ *
  * @author Artur Khakimov <djion@ya.ru>
  */
 @Target(value = ElementType.METHOD)

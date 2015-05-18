@@ -6,6 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Field annotation
+ *
  * @author Artur Khakimov <djion@ya.ru>
  */
 @Target(value = {ElementType.FIELD, ElementType.METHOD})
