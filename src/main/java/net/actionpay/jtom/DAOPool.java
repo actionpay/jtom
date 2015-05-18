@@ -10,6 +10,9 @@ import java.util.HashMap;
 public class DAOPool {
     static HashMap<Class<?>,DAO> daoPool = new HashMap<>();
     static {
+        /**
+         * Find all annotations with Entity mark
+         */
         AnnotationScanner.find(Entity.class).forEach(cl -> {
             try {
                 by(cl);

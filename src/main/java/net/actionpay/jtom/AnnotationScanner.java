@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
+ * Simple directory class checker for annotations
+ * todo: add *.jar read
+ *
  * Created by Temp on 15.05.2015.
  */
 public class AnnotationScanner {

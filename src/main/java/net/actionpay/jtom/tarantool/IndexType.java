@@ -1,6 +1,8 @@
 package net.actionpay.jtom.tarantool;
 
 /**
+ * Index type enum for tarantool
+ *
  * @author Artur Khakimov <djion@ya.ru>
  */
 public enum IndexType {
