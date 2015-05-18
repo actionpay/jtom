@@ -348,11 +348,7 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
                 if (fieldValue instanceof Number && Number.class.isAssignableFrom(field.getType()))
                     field.set(instance, narrovingNumberConversion(field.getType(), (Number) fieldValue));
                 else
-                    try {
-                        field.set(instance, fieldValue);
-                    } catch (Exception ex) {
-                        throw ex;
-                    }
+                    field.set(instance, fieldValue);
             }
             result.add(instance);
         }
