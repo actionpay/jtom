@@ -26,7 +26,7 @@ public class TarantoolQueryResult<T> implements QueryResult<T> {
 
     @Override
     public List<T> getAsObjectList() throws Exception {
-        return ((TarantoolDAOImpl<T>) TarantoolDAOImpl.getByClass(entityClass))
+        return ((TarantoolImpl<T>) TarantoolImpl.getByClass(entityClass))
                 .convertPlainListToObjectList(result);
     }
 
@@ -37,7 +37,7 @@ public class TarantoolQueryResult<T> implements QueryResult<T> {
 
     @Override
     public Iterator<T> getObjectIterator() throws Exception {
-        return ((TarantoolDAOImpl<T>) TarantoolDAOImpl.getByClass(entityClass))
+        return ((TarantoolImpl<T>) TarantoolImpl.getByClass(entityClass))
                 .convertPlainListToObjectList(result).iterator();
     }
 }

@@ -1,7 +1,6 @@
 package net.actionpay.jtom.tarantool;
 
 import net.actionpay.jtom.Connection;
-import net.actionpay.jtom.DAO;
 import org.tarantool.TarantoolConnection16Impl;
 
 import java.io.IOException;
@@ -54,6 +53,6 @@ public class TarantoolConnection implements Connection {
     }
 
     public Class<?> daoClass(){
-        return TarantoolDAOImpl.class;
+        return TarantoolImpl.class;
     }
 }

@@ -15,7 +15,7 @@ import java.util.List;
  *
  * @author Artur Khakimov <djion@ya.ru>
  */
-public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
+public class TarantoolImpl<T> extends CallHandler implements DAO<T> {
 
     private Class<? extends T> entityClass;
     private Map<Integer, java.lang.reflect.Field> fields = new HashMap<>();
@@ -31,7 +31,7 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
             BeforeAdd.class, BeforeGet.class, BeforeDrop.class, BeforeSave.class);
 
     public static DAO getByClass(Class<?> entityClass) throws Exception {
-        pool.putIfAbsent(entityClass, new TarantoolDAOImpl<>(entityClass));
+        pool.putIfAbsent(entityClass, new TarantoolImpl<>(entityClass));
         return pool.get(entityClass);
     }
 
@@ -163,7 +163,7 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
             }
     }
 
-    protected TarantoolDAOImpl(Class<? extends T> entityClass) throws Exception {
+    protected TarantoolImpl(Class<? extends T> entityClass) throws Exception {
         this.entityClass = entityClass;
         init();
     }
