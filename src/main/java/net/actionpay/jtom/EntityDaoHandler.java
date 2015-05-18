@@ -22,9 +22,9 @@ public class EntityDaoHandler {
     public Object callHandler(Object handler, Object source, Object args) throws InvocationTargetException, IllegalAccessException {
         Object result = args;
         if (map.containsKey(handler))
-            for (Method method : map.get(handler)) {
+            for (Method method : map.get(handler))
                 result = method.invoke(source, result);
-            }
+
         return result;
     }
 

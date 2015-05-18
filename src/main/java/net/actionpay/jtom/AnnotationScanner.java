@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Stream;
@@ -12,11 +13,12 @@ import java.util.stream.Stream;
 /**
  * Simple directory class checker for annotations
  * todo: add *.jar read
- *
+ * <p>
  * Created by Temp on 15.05.2015.
  */
 public class AnnotationScanner {
     static List<Class> classes = new ArrayList<>();
+
     static {
         try {
             Enumeration<URL> enumeration = Thread.currentThread().getContextClassLoader().getResources("./");
@@ -26,34 +28,40 @@ public class AnnotationScanner {
                 dirs.add(new File(resource.getFile()));
             }
             classes.clear();
-            for (File directory : dirs) {
-                classes.addAll(findClasses(directory));
-            }
-        } catch (IOException | ClassNotFoundException e) {
+            dirs.stream().forEach(directory -> classes.addAll(findClasses(directory)));
+
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    static private List<Class> findClasses(File directory) throws ClassNotFoundException {
+    /**
+     * Search Classes at directory
+     *
+     * @param directory File
+     * @return list of classes
+     * @throws ClassNotFoundException
+     */
+    static private List<Class> findClasses(File directory) {
         List<Class> classes = new ArrayList<>();
         if (!directory.exists()) {
             return classes;
         }
-        File[] files = directory.listFiles();
-        for (File file : files) {
+        Arrays.stream(directory.listFiles()).forEach(file -> {
             if (file.isDirectory()) {
                 classes.addAll(findClasses(file));
             } else if (file.getName().endsWith(".class")) {
                 try {
                     classes.add(Class.forName(file.getName().substring(0, file.getName().length() - 6)));
-                }catch (Exception ex){}
+                } catch (Exception ex) {
+                }
             }
-        }
+        });
         return classes;
     }
 
     public static Stream<Class> find(Class<? extends Annotation> annotation) {
 
-        return classes.stream().filter(cl->cl.isAnnotationPresent(annotation));
+        return classes.stream().filter(cl -> cl.isAnnotationPresent(annotation));
     }
 }
