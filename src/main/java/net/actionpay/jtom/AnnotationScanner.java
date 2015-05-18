@@ -13,11 +13,11 @@ import java.util.stream.Stream;
  * Created by Temp on 15.05.2015.
  */
 public class AnnotationScanner {
-    static List<Class> classes = new ArrayList<Class>();
+    static List<Class> classes = new ArrayList<>();
     static {
         try {
             Enumeration<URL> enumeration = Thread.currentThread().getContextClassLoader().getResources("./");
-            List<File> dirs = new ArrayList<File>();
+            List<File> dirs = new ArrayList<>();
             while (enumeration.hasMoreElements()) {
                 URL resource = enumeration.nextElement();
                 dirs.add(new File(resource.getFile()));
@@ -32,7 +32,7 @@ public class AnnotationScanner {
     }
 
     static private List<Class> findClasses(File directory) throws ClassNotFoundException {
-        List<Class> classes = new ArrayList<Class>();
+        List<Class> classes = new ArrayList<>();
         if (!directory.exists()) {
             return classes;
         }

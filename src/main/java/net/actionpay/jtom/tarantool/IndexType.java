@@ -1,4 +1,4 @@
-package net.actionpay.jtom;
+package net.actionpay.jtom.tarantool;
 
 /**
  * @author Artur Khakimov <djion@ya.ru>
