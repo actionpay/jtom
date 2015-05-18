@@ -95,6 +95,22 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
 
     }
 
+    private void prepareEmptyKeys(){
+        emptyKey = new ArrayList<>();
+        keys.get(0).keySet().stream().sorted().forEach(key -> {
+            try {
+                Class<?> field = keys.get(0).get(key).getType();
+                //todo: dirty move
+                if (Number.class.isAssignableFrom(field))
+                    ((List) emptyKey).add(field.getConstructors()[0].newInstance(0));
+                else
+                    ((List) emptyKey).add(field.newInstance());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
     /**
      * Process Entity, Indexes, Key, Field annotations, try to get space Id,
      * establish connection if not exist and set link to connection
@@ -109,7 +125,16 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
         if (null == indexes)
             throw new Exception("Indexes annotation is not set for class " + entityClass.getName());
         indexStore(indexes);
-        link = ConnectionPool.connection(tEntityAnnotation.connection());
+        setLink(ConnectionPool.connection(tEntityAnnotation.connection()));
+        initKeys();
+        prepareEmptyKeys();
+        initSpaceName(tEntityAnnotation);
+        initSpaceId();
+        initHandlers();
+
+    }
+
+    private void initKeys() throws Exception {
         for (java.lang.reflect.Field field : entityClass.getDeclaredFields()) {
             Field tarantoolField = field.getDeclaredAnnotation(Field.class);
             Key key = field.getDeclaredAnnotation(Key.class);
@@ -119,24 +144,10 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
             fieldStore(tarantoolField, field);
             keyStore(key, field);
         }
-        emptyKey = new ArrayList<>();
-        keys.get(0).keySet().stream().sorted().forEach(key -> {
-            try {
-                Class<?> field = keys.get(0).get(key).getType();
-                //todo: dirty move
-                if (Number.class.isAssignableFrom(field))
-                    ((List) emptyKey).add(field.getConstructors()[0].newInstance(0));
-                else
-                    ((List) emptyKey).add(field.newInstance());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        space = tEntityAnnotation.space();
-        initSpaceId();
+    }
 
-        initHandlers();
-
+    private void initSpaceName(Entity entity) {
+        space = entity.space();
     }
 
     private void initHandlers() throws Exception {
@@ -172,13 +183,6 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
     }
 
     public QueryResult<T> find(int index, Object value, Integer limit, Integer offset) {
-        List<Object> args = Arrays.asList(spaceId, value, index, 0, 0);
-        if (limit >= 0) {
-            args.set(3, limit);
-            if (offset >= 0) {
-                args.set(4, offset);
-            }
-        }
         List result = ((TarantoolConnection) link).select(spaceId, index, value, offset, limit, 0);
         return new TarantoolQueryResult<>(entityClass, result);
     }
@@ -234,9 +238,10 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
 
     @Override
     public QueryResult<T> dropById(Object id) throws Exception {
-        callHandler(BeforeDrop.class, this, id);
-        TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
-                .delete(spaceId, Arrays.asList(0, id)));
+
+        QueryResult<T> result = (QueryResult<T>)callHandler(BeforeDrop.class, this, new TarantoolQueryResult<>(entityClass,Arrays.asList(id)));
+        result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
+                .delete(spaceId, result.getAsPlainList()));
         callHandler(AfterDrop.class, this, result);
         return result;
     }
@@ -380,6 +385,9 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
     }
 
 
+    public void setLink(Connection link) {
+        this.link = link;
+    }
 }
 
 
