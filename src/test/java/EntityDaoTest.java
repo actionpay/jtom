@@ -2,7 +2,7 @@ import net.actionpay.jtom.DAO;
 import net.actionpay.jtom.ConnectionPool;
 import net.actionpay.jtom.ConnectionInfo;
 import net.actionpay.jtom.tarantool.TarantoolConnection;
-import net.actionpay.jtom.tarantool.TarantoolDAOImpl;
+import net.actionpay.jtom.tarantool.TarantoolImpl;
 import org.junit.*;
 
 import java.util.*;
@@ -13,30 +13,31 @@ import java.util.*;
 public class EntityDaoTest {
     static private String host = "localhost";
     static private Integer port = 3302;
-    static private String login = "login";
+    static private String login = "user";
     static private String password = "password";
 
     @BeforeClass
     static public void prepare() throws Exception {
-        ConnectionPool.init(Collections.singletonList(
-                new ConnectionInfo(TarantoolConnection.class, "keeper", host, port, login, password)));
-        TarantoolDAOImpl.getByClass(MockEntity.class).createSpace();
+        ConnectionPool.init(Arrays.asList(
+                new ConnectionInfo(TarantoolConnection.class, "keeper", host, port, login, password),
+                new ConnectionInfo(TarantoolConnection.class, "system", host, port, login, password)));
+        TarantoolImpl.getByClass(MockEntity.class).createSpace();
     }
 
     @AfterClass
     static public void done() throws Exception {
-        TarantoolDAOImpl.getByClass(MockEntity.class).dropSpace();
+        TarantoolImpl.getByClass(MockEntity.class).dropSpace();
         ConnectionPool.done();
     }
 
     @Test
     public void testInsertSelectTarantool() throws Exception {
         System.out.println("insert/select test");
-        DAO<MockEntity> dao = TarantoolDAOImpl.getByClass(MockEntity.class);
+        DAO<MockEntity> dao = TarantoolImpl.getByClass(MockEntity.class);
         MockEntity entity = new MockEntity();
         Map f3 = new HashMap<>();
         f3.put("key", "value");
-        entity.setId(0)
+        entity.setId(0L)
                 .setF1("1")//integer string test
                 .setF2(2)//integer test
                 .setF3(f3)//map test
@@ -49,23 +50,74 @@ public class EntityDaoTest {
         Assert.assertEquals(entity.getF7().get(0), "1");
         Assert.assertEquals(entity.getF7().get(1), 1);
         Assert.assertEquals(entity.getF7().get(2), "a");
-        System.out.println("end insert/select test");
+        System.out.println("end insert/select test\n");
     }
 
     @Test
-    public void test2() {
+    public void testUpdate() throws Exception {
+        System.out.println("update test");
+        DAO<MockEntity> dao = TarantoolImpl.getByClass(MockEntity.class);
+        MockEntity entity = new MockEntity();
+        Map f3 = new HashMap<>();
+        f3.put("key", "value");
+        entity.setId(0L)
+                .setF1("1")//integer string test
+                .setF2(2)//integer test
+                .setF3(f3)//map test
+                .setF7(Arrays.asList("1", 1, "a"));//array test
+        dao.save(entity);
+        entity.setF1("1m");
+        dao.save(entity);
+        entity = dao.get(0, Collections.singletonList(0)).getObjectIterator().next();
+        Assert.assertEquals(entity.getF1(), "1m");
+        Assert.assertEquals(entity.getF2(), Integer.valueOf(2));
+        Assert.assertEquals(entity.getF3().get("key"), "value");
+        Assert.assertEquals(entity.getF7().get(0), "1");
+        Assert.assertEquals(entity.getF7().get(1), 1);
+        Assert.assertEquals(entity.getF7().get(2), "a");
+        System.out.println("end update test\n");
+    }
 
+    @Test
+    public void testRemove() throws Exception {
+        System.out.println("remove test");
+        DAO<MockEntity> dao = TarantoolImpl.getByClass(MockEntity.class);
+        MockEntity entity = new MockEntity();
+        Map f3 = new HashMap<>();
+        f3.put("key", "value");
+        entity.setId(0L)
+                .setF1("1")//integer string test
+                .setF2(2)//integer test
+                .setF3(f3)//map test
+                .setF7(Arrays.asList("1", 1, "a"));//array test
+        dao.save(entity);
+        dao.drop(entity);
+        try {
+            dao.get(0, Collections.singletonList(0)).getObjectIterator().next();
+            Assert.assertEquals("Should not get here", true, false);
+        } catch (NoSuchElementException ex) {
+            System.out.println("Inserted element removed successful");
+        }
+        dao.save(entity);
+        dao.dropById(0l);
+        try {
+            dao.get(0, Collections.singletonList(0)).getObjectIterator().next();
+            Assert.assertEquals("Should not get here", true, false);
+        } catch (NoSuchElementException ex) {
+            System.out.println("Inserted element removed successful");
+        }
+        System.out.println("end remove test\n");
     }
 
     @Test
     public void test() throws Exception {
         System.out.println("test");
-        DAO<MockEntity> dao = TarantoolDAOImpl.getByClass(MockEntity.class);
+        DAO<MockEntity> dao = TarantoolImpl.getByClass(MockEntity.class);
         Integer count = 10;
         Long startInsert = System.nanoTime();
         for (int i = 0; i < count; i++) {
             MockEntity entityEntity = new MockEntity();
-            entityEntity.setId(i)
+            entityEntity.setId((long) i)
                     .setF1(String.valueOf(i * 10000 + 1))
                     .setF2(i * 10000 + 2)
                     .setF4(i * 10000 + 4)
@@ -90,6 +142,8 @@ public class EntityDaoTest {
 
         System.out.println("Insert Time: " + String.format("%.6f", (startSelect - startInsert) / 1000000000.));
         System.out.println("Select Time: " + String.format("%.6f", (endSelect - startSelect) / 1000000000.));
-        System.out.println("end test");
+        System.out.println("end test\n");
     }
+
+
 }

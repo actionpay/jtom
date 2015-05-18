@@ -1,4 +1,6 @@
-import net.actionpay.jtom.*;
+import net.actionpay.jtom.QueryResult;
+import net.actionpay.jtom.annotations.*;
+import net.actionpay.jtom.tarantool.IndexType;
 
 import java.util.List;
 import java.util.Map;
@@ -13,7 +15,7 @@ import java.util.Map;
 public class MockEntity {
     @Key(index=0,position = 1)
     @Field(position = 0)
-    private Integer id;
+    private Long id;
 
     @Field(position = 1)
     private String f1;
@@ -37,11 +39,11 @@ public class MockEntity {
     @Field(position = 7)
     private List f7;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public MockEntity setId(Integer id) {
+    public MockEntity setId(Long id) {
         this.id = id;
         return this;
     }
@@ -120,4 +122,16 @@ public class MockEntity {
                 +" "+getF6().toString()
                 +" "+getF7().toString();
     }
+
+    @BeforeGet
+    static public QueryResult<?> handlerEvent(QueryResult<?> obj){
+        System.out.print("Key to get: "+obj.getAsPlainList().get(1));
+        return (QueryResult<?>)obj;
+    }
+
+    @AfterGet
+    static public QueryResult<?> handlerAfterGet(Object obj){
+        return (QueryResult<?>)obj;
+    }
+
 }
