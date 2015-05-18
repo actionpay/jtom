@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Created by Temp on 15.05.2015.
+ * @author Artur Khakimov <djion@ya.ru>
  */
 public class EntityDaoHandler {
     HashMap<Object, List<Method>> map = new HashMap<>();
@@ -23,7 +23,7 @@ public class EntityDaoHandler {
         Object result = args;
         if (map.containsKey(handler))
             for (Method method : map.get(handler)) {
-                result = method.invoke(source,result);
+                result = method.invoke(source, result);
             }
         return result;
     }

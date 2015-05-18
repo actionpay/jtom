@@ -253,8 +253,11 @@ public class TarantoolDAOImpl<T> extends EntityDaoHandler implements DAO<T> {
 
 
     public QueryResult<T> get(Integer index, Object key) throws Exception {
-        callHandler(BeforeGet.class, this, Arrays.asList(index,key));
-        QueryResult<T> result;
+        QueryResult<T> result = (QueryResult<T>)callHandler(BeforeGet.class, this, new TarantoolQueryResult<>(entityClass,Arrays.asList(index,key)));
+        if (!(result.getAsPlainList().get(0) == null || result.getAsPlainList().get(0) instanceof Integer))
+            throw new Exception("Wrong index returned by handler. Handler should return QueryResult with index and key");
+        index = (Integer)result.getAsPlainList().get(0);
+        key = result.getAsPlainList().get(1);
         if (index == null)
             result = find(0, Collections.singletonList(key));
         else if (!(key instanceof List)) {
