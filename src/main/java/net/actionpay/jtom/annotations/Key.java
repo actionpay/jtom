@@ -13,6 +13,8 @@ import java.lang.annotation.Target;
 public @interface Key {
     /**
      * Index for this key
+     *
+     * todo: is it need to replace by String name?
      * @return index
      */
     int index();
@@ -20,7 +22,6 @@ public @interface Key {
     /**
      * Position in index for this key
      *
-     * todo: is it need to replace by String name?
      * @return position
      */
     int position();
