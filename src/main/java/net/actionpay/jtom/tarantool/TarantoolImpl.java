@@ -25,6 +25,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
     private Integer fieldsCount = -1;
     private Map<Integer, Map<Integer, java.lang.reflect.Field>> keys = new HashMap<>();
     private Map<Integer, Index> indexMap = new HashMap<>();
+    private Map<String, Integer> indexPositions = new HashMap<>();
     private Connection link;
     private String space;
     private Integer spaceId;
@@ -74,7 +75,9 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
      */
     private void keyStore(Key key, java.lang.reflect.Field field) throws Exception {
         if (key != null) {
-            Integer index = key.index();
+            if (!indexPositions.containsKey(key.index()))
+                throw new Exception("Key index "+key.index()+" not declared in @Indexes");
+            Integer index = indexPositions.get(key.index());
             Integer position = key.position();
             keys.putIfAbsent(index, new HashMap<>());
             if (keys.get(index).containsKey(position))
@@ -171,10 +174,14 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
         init();
     }
 
-    private void indexStore(Indexes indexes) {
+    private void indexStore(Indexes indexes) throws Exception {
         int i = 0;
-        for (Index index : indexes.value())
+        for (Index index : indexes.value()) {
+            if (indexPositions.containsKey(index.name()))
+                throw new Exception("Duplicate Index Key: "+index.name());
+            indexPositions.put(index.name(),i);
             indexMap.put(i++, index);
+        }
     }
 
     public QueryResult<T> find(int index, Object value) {
@@ -288,8 +295,14 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
     private List indexToList(Integer index, T entity) throws IllegalAccessException {
         List<Object> data = new ArrayList<>();
         Map<Integer, java.lang.reflect.Field> keysMap = keys.get(index);
-        for (Integer key : keysMap.keySet())
-            data.add(keysMap.get(key).get(entity));
+        keysMap.keySet().stream().sorted().forEach(key -> {
+            try {
+                data.add(keysMap.get(key).get(entity));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        });
+
         return data;
     }
 

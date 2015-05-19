@@ -14,10 +14,9 @@ public @interface Key {
     /**
      * Index for this key
      *
-     * todo: is it need to replace by String name?
      * @return index
      */
-    int index();
+    String index();
 
     /**
      * Position in index for this key

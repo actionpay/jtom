@@ -12,9 +12,9 @@ import java.util.stream.Stream;
 
 /**
  * Simple directory class checker for annotations
- * todo: add *.jar read
- * <p>
- * Created by Temp on 15.05.2015.
+ * todo: add *.jar read or replace by solid solution
+ *
+ * @author Artur Khakimov <djion@ya.ru>
  */
 public class AnnotationScanner {
     static List<Class> classes = new ArrayList<>();
