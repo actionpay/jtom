@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @author Artur Khakimov <djion@ya.ru>
  */
-public class TarantoolImpl<T> extends CallHandler implements DAO<T> {
+public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHandler {
 
     private Class<? extends T> entityClass;
     private Map<Integer, java.lang.reflect.Field> fields = new HashMap<>();

@@ -40,7 +40,6 @@ public class AnnotationScanner {
      *
      * @param directory File
      * @return list of classes
-     * @throws ClassNotFoundException
      */
     static private List<Class> findClasses(File directory) {
         List<Class> classes = new ArrayList<>();
@@ -53,7 +52,7 @@ public class AnnotationScanner {
             } else if (file.getName().endsWith(".class")) {
                 try {
                     classes.add(Class.forName(file.getName().substring(0, file.getName().length() - 6)));
-                } catch (Exception ex) {
+                } catch (Exception ignored) {
                 }
             }
         });
