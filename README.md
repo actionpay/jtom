@@ -46,5 +46,27 @@ public class Foo {
     @Field(position = 2)
     String field2;
 
+   ...
+   //getters and setters
+   ...
 }
+```
+
+Usage example:
+```
+DAO<Foo> dao = TarantoolImpl.getByClass(Foo.class);
+Foo entity = new Foo();
+entity.setId("some key value")
+      .setField1(2134819234L)
+      .setField2(348912348L);
+//save/insert entity:
+dao.save(entity);
+
+//select/get entity:
+entity = dao.get(0, Collections.singletonList("some key value")).getObjectIterator().next();
+or
+entity = dao.getById("some key value").getObjectIterator().next();
+
+//remove/drop entity:
+dao.drop(entity);
 ```
