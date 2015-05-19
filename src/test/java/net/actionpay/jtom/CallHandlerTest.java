@@ -71,8 +71,8 @@ public class CallHandlerTest {
     }
 
     @Test
-    public void testNonModify() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CallHandler handler = new CallHandler();
+    public void testNonModify() throws Exception {
+        CallHandler handler = new CallHandlerImpl();
         Method methodNonModify = getClass().getDeclaredMethod("mockNonModifyMethod", QueryResult.class);
         handler.registerHandler("nonModify", methodNonModify);
         QueryResult result = new TestQueryResult();
@@ -81,8 +81,8 @@ public class CallHandlerTest {
     }
 
     @Test
-    public void testModify() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CallHandler handler = new CallHandler();
+    public void testModify() throws Exception {
+        CallHandler handler = new CallHandlerImpl();
         Method methodModify = getClass().getDeclaredMethod("mockModifyMethod", QueryResult.class);
         handler.registerHandler("modify", methodModify);
         QueryResult result = new TestQueryResult();
@@ -92,8 +92,8 @@ public class CallHandlerTest {
 
 
     @Test
-    public void testSameDataModify() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CallHandler handler = new CallHandler();
+    public void testSameDataModify() throws Exception {
+        CallHandler handler = new CallHandlerImpl();
         Method methodModifySameData = getClass().getDeclaredMethod("mockModifySameDataMethod", QueryResult.class);
         handler.registerHandler("modifySameData", methodModifySameData);
         QueryResult result = new TestQueryResult();
@@ -104,7 +104,7 @@ public class CallHandlerTest {
     @Test
     public void testMethodNotExist(){
         try {
-            new CallHandler().callHandler("non exist method", this, null);
+            new CallHandlerImpl().callHandler("non exist method", this, null);
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -113,8 +113,8 @@ public class CallHandlerTest {
     }
 
     @Test
-    public void testMultiRegMultiCall() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        CallHandler handler = new CallHandler();
+    public void testMultiRegMultiCall() throws Exception {
+        CallHandler handler = new CallHandlerImpl();
         Method methodNoModify = getClass().getDeclaredMethod("mockNonModifyMethod", QueryResult.class);
         Method methodModify = getClass().getDeclaredMethod("mockModifyMethod", QueryResult.class);
 
