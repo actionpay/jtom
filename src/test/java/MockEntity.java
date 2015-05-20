@@ -8,19 +8,19 @@ import java.util.Map;
 /**
  * Created by Temp on 12.05.2015.
  */
-@Entity(space="test_entity"
+@Entity(space = "test_entity"
         , connection = "keeper")
-@Indexes(value={@Index(indexType = IndexType.INDEX_TYPE_HASH, unique = true, name="primary")
-        ,@Index(indexType = IndexType.INDEX_TYPE_TREE, unique =  false, name="secondary")})
+@Indexes(value = {@Index(indexType = IndexType.INDEX_TYPE_HASH, unique = true, name = "primary")
+        , @Index(indexType = IndexType.INDEX_TYPE_TREE, unique = false, name = "secondary")})
 public class MockEntity {
-    @Key(index=0,position = 1)
+    @Key(index = "primary", position = 1)
     @Field(position = 0)
     private Long id;
 
     @Field(position = 1)
     private String f1;
 
-    @Key(index=1,position = 11)
+    @Key(index = "secondary", position = 1)
     @Field(position = 10)
     private Integer f2;
 
@@ -114,24 +114,24 @@ public class MockEntity {
     @Override
     public String toString() {
         return getId().toString()
-                +" "+getF1().toString()
-                +" "+getF2().toString()
-                +" "+getF3().toString()
-                +" "+getF4().toString()
-                +" "+getF5().toString()
-                +" "+getF6().toString()
-                +" "+getF7().toString();
+                + " " + getF1().toString()
+                + " " + getF2().toString()
+                + " " + getF3().toString()
+                + " " + getF4().toString()
+                + " " + getF5().toString()
+                + " " + getF6().toString()
+                + " " + getF7().toString();
     }
 
     @BeforeGet
-    static public QueryResult<?> handlerEvent(QueryResult<?> obj){
-        System.out.print("Key to get: "+obj.getAsPlainList().get(1));
-        return (QueryResult<?>)obj;
+    static public QueryResult<?> handlerEvent(QueryResult<?> obj) {
+        System.out.print("Key to get: " + obj.getAsPlainList().get(1));
+        return (QueryResult<?>) obj;
     }
 
     @AfterGet
-    static public QueryResult<?> handlerAfterGet(Object obj){
-        return (QueryResult<?>)obj;
+    static public QueryResult<?> handlerAfterGet(Object obj) {
+        return (QueryResult<?>) obj;
     }
 
 }
