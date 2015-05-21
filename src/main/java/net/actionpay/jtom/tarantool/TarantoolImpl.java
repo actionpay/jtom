@@ -2,14 +2,13 @@ package net.actionpay.jtom.tarantool;
 
 import net.actionpay.jtom.*;
 import net.actionpay.jtom.annotations.*;
+import net.actionpay.jtom.annotations.Field;
 import net.actionpay.jtom.exception.InvalidFieldClassException;
 import net.actionpay.jtom.tarantool.exception.WrongTarantoolIndexTypeException;
 import net.actionpay.jtom.tarantool.exception.WrongTarantoolKeyTypeException;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.List;
 
@@ -22,6 +21,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 
     private Class<? extends T> entityClass;
     private Map<Integer, java.lang.reflect.Field> fields = new HashMap<>();
+    private Map<java.lang.reflect.Field, Serializer> fieldSerializers = new HashMap<>();
     private Integer fieldsCount = -1;
     private Map<Integer, Map<Integer, java.lang.reflect.Field>> keys = new HashMap<>();
     private Map<Integer, Index> indexMap = new HashMap<>();
@@ -148,8 +148,16 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
                 throw new Exception("Key field " + field.getName()
                         + " should have annotation @" + Field.class.getName());
             fieldStore(tarantoolField, field);
+            initSerializersStore(field);
             keyStore(key, field);
         }
+    }
+
+    private void initSerializersStore(java.lang.reflect.Field field) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        if (!field.isAnnotationPresent(Serializable.class))
+            return;
+        Serializable serializable = field.getAnnotation(Serializable.class);
+        fieldSerializers.put(field, (Serializer) serializable.value().getMethod("instance").invoke(null));
     }
 
     private void initSpaceName(Entity entity) {
@@ -286,7 +294,10 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
         List<Object> data = new ArrayList<>();
         for (int i = 0; i < fieldsCount; i++)
             if (fields.containsKey(i))
-                data.add(fields.get(i).get(entity));
+                if (fieldSerializers.containsKey(fields.get(i)))
+                    data.add(fieldSerializers.get(fields.get(i)).marshal(fields.get(i).get(entity)));
+                else
+                    data.add(fields.get(i).get(entity));
             else
                 data.add(null);
         return data;
@@ -297,7 +308,11 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
         Map<Integer, java.lang.reflect.Field> keysMap = keys.get(index);
         keysMap.keySet().stream().sorted().forEach(key -> {
             try {
-                data.add(keysMap.get(key).get(entity));
+                java.lang.reflect.Field field = keysMap.get(key);
+                if (fieldSerializers.containsKey(field))
+                    data.add(fieldSerializers.get(field).marshal(field.get(entity)));
+                else
+                    data.add(field.get(entity));
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -365,7 +380,10 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
         for (Object obj : objects) {
             T instance = entityClass.getConstructor().newInstance();
             for (java.lang.reflect.Field field : fields.values()) {
+
                 Object fieldValue = (((List) (obj)).get(field.getDeclaredAnnotation(Field.class).position()));
+                if (fieldSerializers.containsKey(field))
+                    fieldValue = fieldSerializers.get(field).unMarshal(fieldValue);
                 if (fieldValue instanceof Number && Number.class.isAssignableFrom(field.getType()))
                     field.set(instance, narrovingNumberConversion(field.getType(), (Number) fieldValue));
                 else
