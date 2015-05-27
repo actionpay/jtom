@@ -91,10 +91,28 @@ public interface DAO<T> {
 	 */
 	QueryResult<T> getById(Object id) throws Exception;
 
-
+	/**
+	 * @param key Object Key
+	 * @return Object<T> by Key
+	 * @throws Exception implementation depended
+	 */
 	T one(Object key) throws Exception;
 
+	/**
+	 * @param index  index name
+	 * @param object entity
+	 * @return many for object key
+	 * @throws Exception
+	 */
 	List<T> many(String index, Object object) throws Exception;
 
-	List<T> indexToList(Integer index, T entity) throws Exception;
+	/**
+	 * Return list of keys for index
+	 *
+	 * @param index  index Id
+	 * @param entity entity
+	 * @return List of keys
+	 * @throws Exception
+	 */
+	List indexToList(Integer index, T entity) throws Exception;
 }
