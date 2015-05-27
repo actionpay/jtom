@@ -43,7 +43,7 @@ public class DAOPool {
      * @return DAO
      * @throws Exception depends on DAO Engine
      */
-    public static DAO by(Class<?> clazz) throws Exception {
+    public static <T> DAO<T> by(Class<T> clazz) throws Exception {
         daoPool.putIfAbsent(clazz, buildDaoByEntityClass(clazz));
         return daoPool.get(clazz);
     }

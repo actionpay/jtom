@@ -76,7 +76,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
     private void keyStore(Key key, java.lang.reflect.Field field) throws Exception {
         if (key != null) {
             if (!indexPositions.containsKey(key.index()))
-                throw new Exception("Key index "+key.index()+" not declared in @Indexes");
+                throw new Exception("Key index " + key.index() + " not declared in @Indexes");
             Integer index = indexPositions.get(key.index());
             Integer position = key.position();
             keys.putIfAbsent(index, new HashMap<>());
@@ -101,7 +101,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 
     }
 
-    private void prepareEmptyKeys(){
+    private void prepareEmptyKeys() {
         emptyKey = new ArrayList<>();
         keys.get(0).keySet().stream().sorted().forEach(key -> {
             try {
@@ -169,9 +169,9 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
             for (Class<? extends Annotation> obj : handlers) {
                 if (method.isAnnotationPresent(obj)) {
                     if (!Modifier.isStatic(method.getModifiers()))
-                        throw new Exception("Handler method `"+method.getName()+"` should be static.");
-                    if (method.getParameterTypes().length!=1)
-                        throw new Exception("Handler method `"+method.getName()+"` should be have 1 argument.");
+                        throw new Exception("Handler method `" + method.getName() + "` should be static.");
+                    if (method.getParameterTypes().length != 1)
+                        throw new Exception("Handler method `" + method.getName() + "` should be have 1 argument.");
                     registerHandler(obj, method);
                 }
             }
@@ -186,8 +186,8 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
         int i = 0;
         for (Index index : indexes.value()) {
             if (indexPositions.containsKey(index.name()))
-                throw new Exception("Duplicate Index Key: "+index.name());
-            indexPositions.put(index.name(),i);
+                throw new Exception("Duplicate Index Key: " + index.name());
+            indexPositions.put(index.name(), i);
             indexMap.put(i++, index);
         }
     }
@@ -257,7 +257,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
     @Override
     public QueryResult<T> dropById(Object id) throws Exception {
 
-        QueryResult<T> result = (QueryResult<T>)callHandler(BeforeDrop.class, this, new TarantoolQueryResult<>(entityClass,Arrays.asList(id)));
+        QueryResult<T> result = (QueryResult<T>) callHandler(BeforeDrop.class, this, new TarantoolQueryResult<>(entityClass, Arrays.asList(id)));
         result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .delete(spaceId, result.getAsPlainList()));
         callHandler(AfterDrop.class, this, result);
@@ -269,16 +269,33 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
         return get(id);
     }
 
+    @Override
+    public T one(Object key) throws Exception {
+        List<T> objects = get(key).getAsObjectList();
+        if (objects.size() > 1)
+            throw new Exception("Too many objects");
+        if (objects.size() < 1)
+            throw new Exception("Object not found");
+        return objects.get(0);
+    }
+
+    @Override
+    public List<T> many(String indexName, Object object) throws Exception {
+        int indexKey = indexPositions.get(indexName);
+        DAO dao2 = DAOPool.by(object.getClass());
+        return get(indexKey, dao2.indexToList(indexKey, object)).getAsObjectList();
+    }
+
     public QueryResult<T> get(Object key) throws Exception {
         return get(0, key);
     }
 
 
     public QueryResult<T> get(Integer index, Object key) throws Exception {
-        QueryResult<T> result = (QueryResult<T>)callHandler(BeforeGet.class, this, new TarantoolQueryResult<>(entityClass,Arrays.asList(index,key)));
+        QueryResult<T> result = (QueryResult<T>) callHandler(BeforeGet.class, this, new TarantoolQueryResult<>(entityClass, Arrays.asList(index, key)));
         if (!(result.getAsPlainList().get(0) == null || result.getAsPlainList().get(0) instanceof Integer))
             throw new Exception("Wrong index returned by handler. Handler should return QueryResult with index and key");
-        index = (Integer)result.getAsPlainList().get(0);
+        index = (Integer) result.getAsPlainList().get(0);
         key = result.getAsPlainList().get(1);
         if (index == null)
             result = find(0, Collections.singletonList(key));
@@ -303,7 +320,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
         return data;
     }
 
-    private List indexToList(Integer index, T entity) throws IllegalAccessException {
+    public List indexToList(Integer index, T entity) throws Exception {
         List<Object> data = new ArrayList<>();
         Map<Integer, java.lang.reflect.Field> keysMap = keys.get(index);
         keysMap.keySet().stream().sorted().forEach(key -> {
@@ -410,7 +427,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
         return result;
     }
 
-    public QueryResult<T> drop(T entity) throws IllegalAccessException, InvocationTargetException {
+    public QueryResult<T> drop(T entity) throws Exception {
         callHandler(BeforeDrop.class, this, entity);
         TarantoolQueryResult<T> result = new TarantoolQueryResult<>(entityClass, ((TarantoolConnection) link)
                 .delete(spaceId, indexToList(0, entity)));

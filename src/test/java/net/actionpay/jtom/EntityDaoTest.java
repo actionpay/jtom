@@ -1,6 +1,5 @@
-import net.actionpay.jtom.DAO;
-import net.actionpay.jtom.ConnectionPool;
-import net.actionpay.jtom.ConnectionInfo;
+package net.actionpay.jtom;
+
 import net.actionpay.jtom.tarantool.TarantoolConnection;
 import net.actionpay.jtom.tarantool.TarantoolImpl;
 import org.junit.*;
@@ -11,10 +10,10 @@ import java.util.*;
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class EntityDaoTest {
-    static private String host = "localhost";
+    static private String host = "192.168.13.180";
     static private Integer port = 3302;
-    static private String login = "user";
-    static private String password = "password";
+    static private String login = "remarketeer";
+    static private String password = "2kTNifmAIswtXkr";
 
     @BeforeClass
     static public void prepare() throws Exception {
@@ -145,5 +144,23 @@ public class EntityDaoTest {
         System.out.println("end test\n");
     }
 
+    @Test
+    public void testMock() throws Exception {
+        DAO dao = DAOPool.by(MockEntity.class);
+        MockEntity mock1 = new MockEntity();
+        mock1.setId(1L);
+        mock1.setMockEntityId(2L);
+        MockEntity mock2 = new MockEntity();
+        mock2.setId(2L);
+        mock2.setMockEntityId(2L);
+        dao.save(mock1);
+        dao.save(mock2);
+        System.out.println("Mock entities count: " + mock2.getEntities().size());
+        Assert.assertEquals(mock2.getParent().getId(),mock1.getParent().getId());
+        System.out.println("Mock parent for mock1: "+mock2.getParent().getId());
+        System.out.println("Mock parent for mock2: "+mock1.getParent().getId());
+        dao.drop(mock1);
+        dao.drop(mock2);
+    }
 
 }

@@ -1,5 +1,7 @@
 package net.actionpay.jtom;
 
+import java.util.List;
+
 /**
  * @author Artur Khakimov <djion@ya.ru>
  */
@@ -89,4 +91,9 @@ public interface DAO<T> {
      */
     QueryResult<T> getById(Object id) throws Exception;
 
+    T one(Object key) throws Exception;
+
+    List<T> many(String index, Object object) throws Exception;
+
+    List<T> indexToList(Integer index, T entity) throws Exception;
 }

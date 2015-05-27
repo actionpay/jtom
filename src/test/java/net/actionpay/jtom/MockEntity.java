@@ -1,4 +1,5 @@
-import net.actionpay.jtom.QueryResult;
+package net.actionpay.jtom;
+
 import net.actionpay.jtom.annotations.*;
 import net.actionpay.jtom.tarantool.IndexType;
 
@@ -11,7 +12,9 @@ import java.util.Map;
 @Entity(space = "test_entity"
         , connection = "keeper")
 @Indexes(value = {@Index(indexType = IndexType.INDEX_TYPE_HASH, unique = true, name = "primary")
-        , @Index(indexType = IndexType.INDEX_TYPE_TREE, unique = false, name = "secondary")})
+        , @Index(indexType = IndexType.INDEX_TYPE_TREE, unique = false, name = "secondary")
+        , @Index(indexType = IndexType.INDEX_TYPE_TREE, unique = false, name = "mock_entity_id")})
+
 public class MockEntity {
     @Key(index = "primary", position = 1)
     @Field(position = 0)
@@ -23,6 +26,10 @@ public class MockEntity {
     @Key(index = "secondary", position = 1)
     @Field(position = 10)
     private Integer f2;
+
+    @Key(index = "mock_entity_id", position = 1)
+    @Field(position = 12)
+    private Long mockEntityId;
 
     @Field(position = 3)
     private Map f3;
@@ -125,13 +132,30 @@ public class MockEntity {
 
     @BeforeGet
     static public QueryResult<?> handlerEvent(QueryResult<?> obj) {
-        System.out.print("Key to get: " + obj.getAsPlainList().get(1));
+        System.out.println("Key to get: " + obj.getAsPlainList().get(1));
         return (QueryResult<?>) obj;
     }
 
     @AfterGet
     static public QueryResult<?> handlerAfterGet(Object obj) {
         return (QueryResult<?>) obj;
+    }
+
+    public Long getMockEntityId() {
+        return mockEntityId;
+    }
+
+    public MockEntity setMockEntityId(Long mockEntityId) {
+        this.mockEntityId = mockEntityId;
+        return this;
+    }
+
+    public List<MockEntity> getEntities() throws Exception {
+        return DAOPool.by(MockEntity.class).many("mock_entity_id",this);
+    }
+
+    public MockEntity getParent() throws Exception {
+        return (MockEntity) DAOPool.by(MockEntity.class).one(mockEntityId);
     }
 
 }

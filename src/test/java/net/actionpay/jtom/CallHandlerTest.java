@@ -132,8 +132,8 @@ public class CallHandlerTest {
         result = (QueryResult)handler.callHandler("modify", this, result);
         result = (QueryResult)handler.callHandler("modify", this, result);
         Assert.assertEquals(result.getAsPlainList().size(), 4);
-
-
-
     }
+
+
+
 }
