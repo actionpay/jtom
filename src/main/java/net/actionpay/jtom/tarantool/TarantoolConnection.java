@@ -13,46 +13,46 @@ import java.util.List;
  */
 public class TarantoolConnection implements Connection {
 
-    TarantoolConnection16Impl connection;
+	TarantoolConnection16Impl connection;
 
-    @Override
-    public void connect(String host, int port, String user, String password) throws IOException {
-        connection = new TarantoolConnection16Impl(host, port);
-        connection.auth(user, password);
-    }
+	@Override
+	public void connect(String host, int port, String user, String password) throws IOException {
+		connection = new TarantoolConnection16Impl(host, port);
+		connection.auth(user, password);
+	}
 
-    @Override
-    public void ping() throws Exception {
-        if (!connection.ping())
-            throw new Exception("Ping failed");
-    }
+	@Override
+	public void ping() throws Exception {
+		if (!connection.ping())
+			throw new Exception("Ping failed");
+	}
 
-    @Override
-    public void disconnect() throws Exception {
-        connection.close();
-    }
+	@Override
+	public void disconnect() throws Exception {
+		connection.close();
+	}
 
-    public List eval(String eval) {
-        return connection.eval(eval);
-    }
+	public List eval(String eval) {
+		return connection.eval(eval);
+	}
 
-    public List select(int spaceId, int index, Object value, int offset, int limit, int iterator) {
-        return connection.select(spaceId, index, value, offset, limit, iterator);
-    }
+	public List select(int spaceId, int index, Object value, int offset, int limit, int iterator) {
+		return connection.select(spaceId, index, value, offset, limit, iterator);
+	}
 
-    public List insert(Integer spaceId, List list) {
-        return connection.insert(spaceId, list);
-    }
+	public List insert(Integer spaceId, List list) {
+		return connection.insert(spaceId, list);
+	}
 
-    public List replace(Integer spaceId, List list) {
-        return connection.replace(spaceId, list);
-    }
+	public List replace(Integer spaceId, List list) {
+		return connection.replace(spaceId, list);
+	}
 
-    public List delete(Integer spaceId, List list) {
-        return connection.delete(spaceId, list);
-    }
+	public List delete(Integer spaceId, List list) {
+		return connection.delete(spaceId, list);
+	}
 
-    public Class<?> daoClass(){
-        return TarantoolImpl.class;
-    }
+	public Class<?> daoClass() {
+		return TarantoolImpl.class;
+	}
 }

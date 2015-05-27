@@ -11,17 +11,17 @@ import java.lang.annotation.Target;
 @Target(value = ElementType.FIELD)
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface Key {
-    /**
-     * Index for this key
-     *
-     * @return index
-     */
-    String index();
+	/**
+	 * Index for this key
+	 *
+	 * @return index
+	 */
+	String index();
 
-    /**
-     * Position in index for this key
-     *
-     * @return position
-     */
-    int position();
+	/**
+	 * Position in index for this key
+	 *
+	 * @return position
+	 */
+	int position();
 }

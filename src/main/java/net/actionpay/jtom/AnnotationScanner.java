@@ -17,50 +17,50 @@ import java.util.stream.Stream;
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class AnnotationScanner {
-    static List<Class> classes = new ArrayList<>();
+	static List<Class> classes = new ArrayList<>();
 
-    static {
-        try {
-            Enumeration<URL> enumeration = Thread.currentThread().getContextClassLoader().getResources("./");
-            List<File> dirs = new ArrayList<>();
-            while (enumeration.hasMoreElements()) {
-                URL resource = enumeration.nextElement();
-                dirs.add(new File(resource.getFile()));
-            }
-            classes.clear();
-            dirs.stream().forEach(directory -> classes.addAll(findClasses(directory)));
+	static {
+		try {
+			Enumeration<URL> enumeration = Thread.currentThread().getContextClassLoader().getResources("./");
+			List<File> dirs = new ArrayList<>();
+			while (enumeration.hasMoreElements()) {
+				URL resource = enumeration.nextElement();
+				dirs.add(new File(resource.getFile()));
+			}
+			classes.clear();
+			dirs.stream().forEach(directory -> classes.addAll(findClasses(directory)));
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
-    /**
-     * Search Classes at directory
-     *
-     * @param directory File
-     * @return list of classes
-     */
-    static private List<Class> findClasses(File directory) {
-        List<Class> classes = new ArrayList<>();
-        if (!directory.exists()) {
-            return classes;
-        }
-        Arrays.stream(directory.listFiles()).forEach(file -> {
-            if (file.isDirectory()) {
-                classes.addAll(findClasses(file));
-            } else if (file.getName().endsWith(".class")) {
-                try {
-                    classes.add(Class.forName(file.getName().substring(0, file.getName().length() - 6)));
-                } catch (Exception ignored) {
-                }
-            }
-        });
-        return classes;
-    }
+	/**
+	 * Search Classes at directory
+	 *
+	 * @param directory File
+	 * @return list of classes
+	 */
+	static private List<Class> findClasses(File directory) {
+		List<Class> classes = new ArrayList<>();
+		if (!directory.exists()) {
+			return classes;
+		}
+		Arrays.stream(directory.listFiles()).forEach(file -> {
+			if (file.isDirectory()) {
+				classes.addAll(findClasses(file));
+			} else if (file.getName().endsWith(".class")) {
+				try {
+					classes.add(Class.forName(file.getName().substring(0, file.getName().length() - 6)));
+				} catch (Exception ignored) {
+				}
+			}
+		});
+		return classes;
+	}
 
-    public static Stream<Class> find(Class<? extends Annotation> annotation) {
+	public static Stream<Class> find(Class<? extends Annotation> annotation) {
 
-        return classes.stream().filter(cl -> cl.isAnnotationPresent(annotation));
-    }
+		return classes.stream().filter(cl -> cl.isAnnotationPresent(annotation));
+	}
 }

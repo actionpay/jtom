@@ -6,5 +6,5 @@ import net.actionpay.jtom.Serializer;
  * Created by Temp on 21.05.2015.
  */
 public @interface Serializable {
-    Class<? extends Serializer> value();
+	Class<? extends Serializer> value();
 }

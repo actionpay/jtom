@@ -10,9 +10,9 @@ import java.lang.annotation.*;
 @Target(value = ElementType.ANNOTATION_TYPE)
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface Index {
-    IndexType indexType();
+	IndexType indexType();
 
-    boolean unique() default true;
+	boolean unique() default true;
 
-    String name();
+	String name();
 }
