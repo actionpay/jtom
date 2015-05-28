@@ -4,7 +4,7 @@
 
     <groupId>io.actionpay</groupId>
     <artifactId>jtom</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.3</version>
     <packaging>jar</packaging>
 
     <repositories>
@@ -18,7 +18,8 @@
         <connection>scm:git:git@github.com:AdOnWeb/jtom.git</connection>
         <url>scm:git:git@github.com:AdOnWeb/jtom.git</url>
         <developerConnection>scm:git:git@github.com:AdOnWeb/jtom.git</developerConnection>
-    </scm>
+      <tag>0.0.3</tag>
+  </scm>
 
     <properties>
         <jdk.version>1.8</jdk.version>
