@@ -13,7 +13,7 @@ import java.util.Map;
         , connection = "keeper")
 @Indexes(value = {@Index(indexType = IndexType.INDEX_TYPE_HASH, unique = true, name = "primary")
         , @Index(indexType = IndexType.INDEX_TYPE_TREE, unique = false, name = "secondary")
-        , @Index(indexType = IndexType.INDEX_TYPE_TREE, unique = false, name = "mock_entity_id")})
+        })
 
 public class MockEntity {
     @Key(index = "primary", position = 1)
@@ -24,12 +24,10 @@ public class MockEntity {
     private String f1;
 
     @Key(index = "secondary", position = 1)
-    @Field(position = 10)
+    @Field(position = 2)
     private Integer f2;
 
-    @Key(index = "mock_entity_id", position = 1)
-    @Field(position = 12)
-    private Long mockEntityId;
+
 
     @Field(position = 3)
     private Map f3;
@@ -141,21 +139,12 @@ public class MockEntity {
         return (QueryResult<?>) obj;
     }
 
-    public Long getMockEntityId() {
-        return mockEntityId;
+
+
+    public List<MockManyEntity> getEntities() throws Exception {
+        return DAOPool.by(MockManyEntity.class).many("mock_entity_id",this);
     }
 
-    public MockEntity setMockEntityId(Long mockEntityId) {
-        this.mockEntityId = mockEntityId;
-        return this;
-    }
 
-    public List<MockEntity> getEntities() throws Exception {
-        return DAOPool.by(MockEntity.class).many("mock_entity_id",this);
-    }
-
-    public MockEntity getParent() throws Exception {
-        return (MockEntity) DAOPool.by(MockEntity.class).one(mockEntityId);
-    }
 
 }

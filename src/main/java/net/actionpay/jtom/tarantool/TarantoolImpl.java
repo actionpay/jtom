@@ -21,6 +21,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 
 	private Class<? extends T> entityClass;
 	private Map<Integer, java.lang.reflect.Field> fields = new HashMap<>();
+	private Map<java.lang.reflect.Field, Integer> fieldPositions = new HashMap<>();
 	private Map<java.lang.reflect.Field, Serializer> fieldSerializers = new HashMap<>();
 	private Integer fieldsCount = -1;
 	private Map<Integer, Map<Integer, java.lang.reflect.Field>> keys = new HashMap<>();
@@ -62,6 +63,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 			if (fields.containsKey(tarantoolField.position()))
 				throw new Exception("Cannot be 2 or more fields with same position: " + field.getName());
 			fields.put(fieldPosition, field);
+			fieldPositions.put(field,fieldPosition);
 			validateFieldClass(field.getType());
 		}
 	}
@@ -227,7 +229,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 					.append("unique = ").append(String.valueOf(index.unique())).append(" , parts = {");
 			for (Integer id : keys.get(indexId).keySet()) {
 				java.lang.reflect.Field field = keys.get(indexId).get(id);
-				query.append(id).append(", '").append(typeToKeyType(field.getType())).append("', ");
+				query.append(fieldPositions.get(field)+1).append(", '").append(typeToKeyType(field.getType())).append("', ");
 			}
 			query.append("}})\n");
 		}
@@ -281,9 +283,9 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 
 	@Override
 	public List<T> many(String indexName, Object object) throws Exception {
-		int indexKey = indexPositions.get(indexName);
 		DAO dao2 = DAOPool.by(object.getClass());
-		return get(indexKey, dao2.indexToList(indexKey, object)).getAsObjectList();
+		List indexValue = dao2.indexToList(0, object);
+		return get(indexPositions.get(indexName), indexValue).getAsObjectList();
 	}
 
 	public QueryResult<T> get(Object key) throws Exception {
@@ -318,6 +320,10 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 			else
 				data.add(null);
 		return data;
+	}
+
+	public List indexToList(String name, T entity) throws Exception {
+		return indexToList(indexPositions.get(name), entity);
 	}
 
 	public List indexToList(Integer index, T entity) throws Exception {
@@ -438,6 +444,24 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 
 	public void setLink(Connection link) {
 		this.link = link;
+	}
+
+	@Override
+	public String toString() {
+		return "TarantoolImpl{" +
+				"\nentityClass=" + entityClass +
+				",\n fields=" + fields +
+				",\n fieldSerializers=" + fieldSerializers +
+				",\n fieldsCount=" + fieldsCount +
+				",\n keys=" + keys +
+				",\n indexMap=" + indexMap +
+				",\n indexPositions=" + indexPositions +
+				",\n link=" + link +
+				",\n space='" + space + '\'' +
+				",\n spaceId=" + spaceId +
+				",\n emptyKey=" + emptyKey +
+				",\n handlers=" + handlers +
+				'}';
 	}
 }
 

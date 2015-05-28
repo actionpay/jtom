@@ -49,7 +49,7 @@ public class ConnectionPool {
 	protected static void establish(Class<? extends Connection> connector
 			, String name, String host, Integer port, String user, String password) throws Exception {
 		if (pool.containsKey(name)) {
-			throw new InvalidArgumentException();
+			throw new InvalidArgumentException("Pool already contains connection: " + name);
 		}
 		Connection connection = connector.getConstructor().newInstance();
 		connection.connect(host, port, user, password);
@@ -65,7 +65,7 @@ public class ConnectionPool {
 	 */
 	public static Connection connection(String name) throws Exception {
 		if (!pool.containsKey(name)) {
-			throw new InvalidArgumentException();
+			throw new InvalidArgumentException("`" + name + "` connection is not exist.");
 		}
 		return pool.get(name);
 	}
