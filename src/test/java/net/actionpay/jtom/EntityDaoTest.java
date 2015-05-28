@@ -150,6 +150,7 @@ public class EntityDaoTest {
 	@Test
 	public void testMock() throws Exception {
 		Long mockId = 46L;
+		int linkedToTestMockCount = 0;
 		DAO<MockEntity> daoMock = DAOPool.by(MockEntity.class);
 		DAO<MockManyEntity> daoManyMock = DAOPool.by(MockManyEntity.class);
 		MockEntity mock = new MockEntity();
@@ -160,13 +161,15 @@ public class EntityDaoTest {
 		for (int i = 0; i < 100; i++) {
 			MockManyEntity mockMany = new MockManyEntity();
 			mockMany.setId((long) i);
-			if (i%2==0)
+			if (i%2==0) {
+				linkedToTestMockCount++;
 				mockMany.setParent(mock);
+			}
 			else
 				mockMany.setMockEntityId(10L);
 			daoManyMock.save(mockMany);
 		}
-		Assert.assertEquals(50, mock.getEntities().size());
+		Assert.assertEquals(linkedToTestMockCount, mock.getEntities().size());
 		daoMock.drop(mock);
 	}
 

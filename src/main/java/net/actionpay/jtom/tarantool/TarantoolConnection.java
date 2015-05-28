@@ -1,7 +1,9 @@
 package net.actionpay.jtom.tarantool;
 
 import net.actionpay.jtom.Connection;
+import net.actionpay.jtom.tarantool.exception.NoPingException;
 import org.tarantool.TarantoolConnection16Impl;
+import org.tarantool.TarantoolException;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,7 +26,7 @@ public class TarantoolConnection implements Connection {
 	@Override
 	public void ping() throws Exception {
 		if (!connection.ping())
-			throw new Exception("Ping failed");
+			throw new NoPingException("Ping failed");
 	}
 
 	@Override

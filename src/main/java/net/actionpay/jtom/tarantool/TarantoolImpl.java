@@ -1,11 +1,12 @@
 package net.actionpay.jtom.tarantool;
 
+import com.sun.org.apache.xpath.internal.functions.WrongNumberArgsException;
 import net.actionpay.jtom.*;
 import net.actionpay.jtom.annotations.*;
 import net.actionpay.jtom.annotations.Field;
 import net.actionpay.jtom.exception.InvalidFieldClassException;
-import net.actionpay.jtom.tarantool.exception.WrongTarantoolIndexTypeException;
-import net.actionpay.jtom.tarantool.exception.WrongTarantoolKeyTypeException;
+import net.actionpay.jtom.exception.NonStaticMethodException;
+import net.actionpay.jtom.tarantool.exception.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -61,7 +62,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 			if (!field.isAccessible())
 				field.setAccessible(true);
 			if (fields.containsKey(tarantoolField.position()))
-				throw new Exception("Cannot be 2 or more fields with same position: " + field.getName());
+				throw new WrongTarantoolFieldPositionException("Cannot be 2 or more fields with same position: " + field.getName());
 			fields.put(fieldPosition, field);
 			fieldPositions.put(field,fieldPosition);
 			validateFieldClass(field.getType());
@@ -78,12 +79,12 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 	private void keyStore(Key key, java.lang.reflect.Field field) throws Exception {
 		if (key != null) {
 			if (!indexPositions.containsKey(key.index()))
-				throw new Exception("Key index " + key.index() + " not declared in @Indexes");
+				throw new UndeclaredKeyIndexException("Key index " + key.index() + " not declared in @Indexes");
 			Integer index = indexPositions.get(key.index());
 			Integer position = key.position();
 			keys.putIfAbsent(index, new HashMap<>());
 			if (keys.get(index).containsKey(position))
-				throw new Exception("Cannot be 2 or more keys with same position " + position + " and same index "
+				throw new WrongKeyIndexException("Cannot be 2 or more keys with same position " + position + " and same index "
 						+ index + ": " + field.getName());
 			keys.get(index).put(position, field);
 		}
@@ -128,10 +129,10 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 	private void init() throws Exception {
 		Entity tEntityAnnotation = entityClass.getDeclaredAnnotation(Entity.class);
 		if (null == tEntityAnnotation)
-			throw new Exception("Entity annotation is not set for class " + entityClass.getName());
+			throw new EntityAnnotationMissException("Entity annotation is not set for class " + entityClass.getName());
 		Indexes indexes = entityClass.getDeclaredAnnotation(Indexes.class);
 		if (null == indexes)
-			throw new Exception("Indexes annotation is not set for class " + entityClass.getName());
+			throw new IndexAnnotationMissException("Indexes annotation is not set for class " + entityClass.getName());
 		indexStore(indexes);
 		setLink(ConnectionPool.connection(tEntityAnnotation.connection()));
 		initKeys();
@@ -147,7 +148,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 			Field tarantoolField = field.getDeclaredAnnotation(Field.class);
 			Key key = field.getDeclaredAnnotation(Key.class);
 			if (key != null && tarantoolField == null)
-				throw new Exception("Key field " + field.getName()
+				throw new UndeclaredKeyFieldException("Key field " + field.getName()
 						+ " should have annotation @" + Field.class.getName());
 			fieldStore(tarantoolField, field);
 			initSerializersStore(field);
@@ -171,9 +172,9 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 			for (Class<? extends Annotation> obj : handlers) {
 				if (method.isAnnotationPresent(obj)) {
 					if (!Modifier.isStatic(method.getModifiers()))
-						throw new Exception("Handler method `" + method.getName() + "` should be static.");
+						throw new NonStaticMethodException("Handler method `" + method.getName() + "` should be static.");
 					if (method.getParameterTypes().length != 1)
-						throw new Exception("Handler method `" + method.getName() + "` should be have 1 argument.");
+						throw new WrongNumberArgsException("Handler method `" + method.getName() + "` should be have 1 argument.");
 					registerHandler(obj, method);
 				}
 			}
@@ -188,7 +189,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 		int i = 0;
 		for (Index index : indexes.value()) {
 			if (indexPositions.containsKey(index.name()))
-				throw new Exception("Duplicate Index Key: " + index.name());
+				throw new DuplicateIndexKeyException("Duplicate Index Key: " + index.name());
 			indexPositions.put(index.name(), i);
 			indexMap.put(i++, index);
 		}
@@ -275,9 +276,9 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 	public T one(Object key) throws Exception {
 		List<T> objects = get(key).getAsObjectList();
 		if (objects.size() > 1)
-			throw new Exception("Too many objects");
+			throw new IndexRelationException("Too many objects");
 		if (objects.size() < 1)
-			throw new Exception("Object not found");
+			throw new IndexRelationException("Object not found");
 		return objects.get(0);
 	}
 
@@ -296,7 +297,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 	public QueryResult<T> get(Integer index, Object key) throws Exception {
 		QueryResult<T> result = (QueryResult<T>) callHandler(BeforeGet.class, this, new TarantoolQueryResult<>(entityClass, Arrays.asList(index, key)));
 		if (!(result.getAsPlainList().get(0) == null || result.getAsPlainList().get(0) instanceof Integer))
-			throw new Exception("Wrong index returned by handler. Handler should return QueryResult with index and key");
+			throw new WrongResultTypeException("Wrong index returned by handler. Handler should return QueryResult with index and key");
 		index = (Integer) result.getAsPlainList().get(0);
 		key = result.getAsPlainList().get(1);
 		if (index == null)
@@ -394,7 +395,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 		if (Double.class.equals(outputType))
 			return value.doubleValue();
 
-		throw new Exception("output type is not number type");
+		throw new NumberFormatException("Output type is not number type");
 
 	}
 
@@ -448,7 +449,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 
 	@Override
 	public String toString() {
-		return "TarantoolImpl{" +
+		return super.toString()+"{" +
 				"\nentityClass=" + entityClass +
 				",\n fields=" + fields +
 				",\n fieldSerializers=" + fieldSerializers +
