@@ -5,7 +5,7 @@
 
     <groupId>org.adonweb</groupId>
     <artifactId>jtom</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <packaging>jar</packaging>
 
     <repositories>
@@ -19,7 +19,6 @@
         <connection>scm:git:git@github.com:AdOnWeb/jtom.git</connection>
         <url>scm:git:git@github.com:AdOnWeb/jtom.git</url>
         <developerConnection>scm:git:git@github.com:AdOnWeb/jtom.git</developerConnection>
-        <tag>jtom-0.0.1</tag>
     </scm>
 
     <properties>
