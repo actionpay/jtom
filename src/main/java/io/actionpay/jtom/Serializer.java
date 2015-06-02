@@ -6,8 +6,6 @@ package io.actionpay.jtom;
 public interface Serializer {
 	Object marshal(Object o);
 
-	Object unMarshal(Object o);
-
-	Serializer instance();
+	Object unmarshal(Object o);
 
 }

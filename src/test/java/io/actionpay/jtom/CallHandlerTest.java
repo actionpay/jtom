@@ -11,7 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by Temp on 18.05.2015.
+ * @author Artur Khakimov<djion@ya.ru>
  */
 public class CallHandlerTest {
 

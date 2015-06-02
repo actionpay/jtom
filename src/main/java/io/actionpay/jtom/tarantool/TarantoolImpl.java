@@ -3,6 +3,7 @@ package io.actionpay.jtom.tarantool;
 import com.sun.org.apache.xpath.internal.functions.WrongNumberArgsException;
 import io.actionpay.jtom.*;
 import io.actionpay.jtom.annotations.*;
+import io.actionpay.jtom.annotations.Properties;
 import io.actionpay.jtom.tarantool.exception.*;
 import io.actionpay.jtom.exception.InvalidFieldClassException;
 import io.actionpay.jtom.exception.NonStaticMethodException;
@@ -18,22 +19,42 @@ import java.util.List;
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHandler {
-
+	//space Id for properties
+	Map<String, Integer> propertyMapSpace = new HashMap<>();
+	//connections for properties
+	Map<String, Connection> propertyMapConnection = new HashMap<>();
+	// dao entity class
 	private Class<? extends T> entityClass;
+	// field position - field link
 	private Map<Integer, java.lang.reflect.Field> fields = new HashMap<>();
+	// field - field position link
 	private Map<java.lang.reflect.Field, Integer> fieldPositions = new HashMap<>();
-	private Map<java.lang.reflect.Field, Serializer> fieldSerializers = new HashMap<>();
+	// field - serializer link
+	SerializeManager serializeManager = SerializeManager.getInstance();
+	// max count fields (calculated value)
 	private Integer fieldsCount = -1;
+	//index - key map link
 	private Map<Integer, Map<Integer, java.lang.reflect.Field>> keys = new HashMap<>();
+	//
 	private Map<Integer, Index> indexMap = new HashMap<>();
+	//index name - index position link
 	private Map<String, Integer> indexPositions = new HashMap<>();
+	//dao connection
 	private Connection link;
+	//space name
 	private String space;
+	//space id (caculated value)
 	private Integer spaceId;
+	//null key object (calculated value)
 	private Object emptyKey;
+	//dao pool
 	protected static HashMap<Class<?>, DAO> pool = new HashMap<>();
+	//possible handlers
 	private List<Class<? extends Annotation>> handlers = Arrays.asList(AfterAdd.class, AfterDrop.class, AfterGet.class, AfterSave.class,
 			BeforeAdd.class, BeforeGet.class, BeforeDrop.class, BeforeSave.class);
+
+	List<Class<?>> serializableClasses = Arrays.asList(Number.class, String.class, Map.class, List.class
+			, Boolean.class, double.class, long.class, float.class, boolean.class, int.class);
 
 	public static DAO getByClass(Class<?> entityClass) throws Exception {
 		pool.putIfAbsent(entityClass, new TarantoolImpl<>(entityClass));
@@ -41,17 +62,38 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 	}
 
 	void validateFieldClass(Class<?> fClass) throws InvalidFieldClassException {
-		if (!((Number.class.isAssignableFrom(fClass))
-				|| String.class.isAssignableFrom(fClass)
-				|| Map.class.isAssignableFrom(fClass)
-				|| List.class.isAssignableFrom(fClass)
-				|| Boolean.class.isAssignableFrom(fClass)
-				|| double.class.isAssignableFrom(fClass)
-				|| long.class.isAssignableFrom(fClass)
-				|| float.class.isAssignableFrom(fClass)
-				|| boolean.class.isAssignableFrom(fClass)
-				|| int.class.isAssignableFrom(fClass)))
-			throw new InvalidFieldClassException("Class " + fClass + " not supported by Tarantool");
+		for (Class<?> clazz : serializableClasses)
+			if (clazz.isAssignableFrom(fClass))
+				return;
+		throw new InvalidFieldClassException("Class " + fClass + " not supported by Tarantool");
+	}
+
+
+	private void initProperties() throws Exception {
+		Properties properties = entityClass.getAnnotation(Properties.class);
+		if (properties == null)
+			return;
+		for (Property property : properties.value()) {
+			String propertySpace = property.space();
+			propertyMapConnection.putIfAbsent(propertySpace, ConnectionPool.connection(property.connection()));
+			Integer spaceId = getSpaceId(propertyMapConnection.get(propertySpace), propertySpace);
+			if (spaceId == null)
+				createPropertySpace(property);
+			spaceId = getSpaceId(propertyMapConnection.get(propertySpace), propertySpace);
+			if (spaceId == null)
+				throw new Exception("Cant find/create space: " + propertySpace);
+			propertyMapSpace.putIfAbsent(propertySpace, spaceId);
+		}
+
+	}
+
+	private void createPropertySpace(Property property) throws Exception {
+		Integer index0keysCount = keys.get(0).size();
+		StringBuilder query = new StringBuilder();
+		query.append("box.schema.space.create('").append(property.space()).append("')\n")
+				.append(buildSpaceIndexCreateEvalExpression(0, property.space(), true));
+		System.out.println(query);
+		((TarantoolConnection) propertyMapConnection.get(property.space())).eval(query.toString());
 	}
 
 	private void fieldStore(io.actionpay.jtom.annotations.Field tarantoolField, java.lang.reflect.Field field) throws Exception {
@@ -63,7 +105,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 			if (fields.containsKey(tarantoolField.position()))
 				throw new WrongTarantoolFieldPositionException("Cannot be 2 or more fields with same position: " + field.getName());
 			fields.put(fieldPosition, field);
-			fieldPositions.put(field,fieldPosition);
+			fieldPositions.put(field, fieldPosition);
 			validateFieldClass(field.getType());
 		}
 	}
@@ -89,17 +131,21 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 		}
 	}
 
+	private Integer getSpaceId(Connection link, String space) throws Exception {
+		List result = ((TarantoolConnection) link).eval("box_space_" + space + " = box.space." + space + "\n"
+				+ "if not box_space_" + space + " then return null end\n"
+				+ "return box.space." + space + ".id");
+		spaceId = (Integer) result.get(0);
+		return spaceId;
+	}
+
 	/**
 	 * Init space id code if space exists
 	 *
 	 * @throws Exception if some Tarantool magic don't work
 	 */
 	private void initSpaceId() throws Exception {
-
-		List result = ((TarantoolConnection) link).eval("box_space_" + space + " = box.space." + space + "\n"
-				+ "if not box_space_" + space + " then return null end\n"
-				+ "return box.space." + space + ".id");
-		spaceId = (Integer) result.get(0);
+		spaceId = (Integer) getSpaceId(link, space);
 
 	}
 
@@ -139,6 +185,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 		initSpaceName(tEntityAnnotation);
 		initSpaceId();
 		initHandlers();
+		initProperties();
 
 	}
 
@@ -159,7 +206,8 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 		if (!field.isAnnotationPresent(Serializable.class))
 			return;
 		Serializable serializable = field.getAnnotation(Serializable.class);
-		fieldSerializers.put(field, (Serializer) serializable.value().getMethod("instance").invoke(null));
+		serializableClasses.add(field.getDeclaringClass());
+		serializeManager.put(field, (Serializer) serializable.value().getMethod("instance").invoke(null));
 	}
 
 	private void initSpaceName(Entity entity) {
@@ -219,20 +267,30 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 	String buildSpaceCreateEvalExpression() throws Exception {
 		StringBuilder query = new StringBuilder();
 		query.append("box.schema.space.create('").append(space).append("')\n");
-		for (Integer indexId : indexMap.keySet()) {
-			Index index = indexMap.get(indexId);
-			query.append("box.space.")
-					.append(space)
-					.append(":create_index('")
-					.append(null == index.name() ? indexId : index.name())
-					.append("', {type = '").append(indexTypeToString(index.indexType())).append("', ")
-					.append("unique = ").append(String.valueOf(index.unique())).append(" , parts = {");
-			for (Integer id : keys.get(indexId).keySet()) {
-				java.lang.reflect.Field field = keys.get(indexId).get(id);
-				query.append(fieldPositions.get(field)+1).append(", '").append(typeToKeyType(field.getType())).append("', ");
-			}
-			query.append("}})\n");
+		for (Integer indexId : indexMap.keySet())
+			query.append(buildSpaceIndexCreateEvalExpression(indexId, space, false));
+		return query.toString();
+	}
+
+	private String buildSpaceIndexCreateEvalExpression(Integer indexId, String space, boolean isPacket) throws WrongTarantoolKeyTypeException {
+		StringBuilder query = new StringBuilder();
+		Index index = indexMap.get(indexId);
+		query.append("box.space.")
+				.append(space)
+				.append(":create_index('")
+				.append(null == index.name() ? indexId : index.name())
+				.append("', {type = '").append(index.indexType().toString()).append("', ")
+				.append("unique = ").append(String.valueOf(index.unique())).append(" , parts = {");
+		int idInc = 1;
+		for (Integer id : keys.get(indexId).keySet()) {
+			java.lang.reflect.Field field = keys.get(indexId).get(id);
+			if (isPacket)
+				query.append(idInc++).append(", '").append(typeToKeyType(field.getType())).append("', ");
+			else
+				query.append(fieldPositions.get(field) + 1).append(", '").append(typeToKeyType(field.getType())).append("', ");
 		}
+		query.append("}})\n");
+
 		return query.toString();
 	}
 
@@ -313,10 +371,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 		List<Object> data = new ArrayList<>();
 		for (int i = 0; i < fieldsCount; i++)
 			if (fields.containsKey(i))
-				if (fieldSerializers.containsKey(fields.get(i)))
-					data.add(fieldSerializers.get(fields.get(i)).marshal(fields.get(i).get(entity)));
-				else
-					data.add(fields.get(i).get(entity));
+				data.add(serializeManager.marshal(fields.get(i), fields.get(i).get(entity)));
 			else
 				data.add(null);
 		return data;
@@ -332,10 +387,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 		keysMap.keySet().stream().sorted().forEach(key -> {
 			try {
 				java.lang.reflect.Field field = keysMap.get(key);
-				if (fieldSerializers.containsKey(field))
-					data.add(fieldSerializers.get(field).marshal(field.get(entity)));
-				else
-					data.add(field.get(entity));
+				data.add(serializeManager.marshal(field, field.get(entity)));
 			} catch (IllegalAccessException e) {
 				e.printStackTrace();
 			}
@@ -344,20 +396,25 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 		return data;
 	}
 
+	@Override
+	public <T2> void setProperty(T entity, String propertyName, T2 value, Class<T2> propertyClass) throws Exception {
+		List data = indexToList(0, entity);
+		data.add(serializeManager.marshal(propertyClass, value));
+		TarantoolConnection connection = ((TarantoolConnection) propertyMapConnection.get(propertyName));
+		connection.replace(propertyMapSpace.get(propertyName), data);
+	}
 
-	String indexTypeToString(IndexType type) throws WrongTarantoolIndexTypeException {
-		switch (type) {
-			case INDEX_TYPE_HASH:
-				return "HASH";
-			case INDEX_TYPE_BITSET:
-				return "BITSET";
-			case INDEX_TYPE_RTREE:
-				return "RTREE";
-			case INDEX_TYPE_TREE:
-				return "TREE";
-			default:
-				throw new WrongTarantoolIndexTypeException();
-		}
+	@Override
+	public <T2> T2 getProperty(T entity, String propertyName, Class<T2> propertyClass) throws Exception {
+
+		TarantoolConnection connection = ((TarantoolConnection) propertyMapConnection.get(propertyName));
+		List data = (List) connection.select(propertyMapSpace.get(propertyName), 0, indexToList(0, entity), 0, 1, 2).get(0);
+		List result = (List) data.subList(keys.get(0).size(), data.size());
+
+		if (serializeManager.containsKey(propertyClass))
+			return (T2) serializeManager.unmarshal(propertyClass, result);
+		else
+			return (T2) (result.get(0));
 	}
 
 
@@ -405,8 +462,8 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 			for (java.lang.reflect.Field field : fields.values()) {
 
 				Object fieldValue = (((List) (obj)).get(field.getDeclaredAnnotation(io.actionpay.jtom.annotations.Field.class).position()));
-				if (fieldSerializers.containsKey(field))
-					fieldValue = fieldSerializers.get(field).unMarshal(fieldValue);
+				if (serializeManager.containsKey(field))
+					fieldValue = serializeManager.unmarshal(field, fieldValue);
 				if (fieldValue instanceof Number && Number.class.isAssignableFrom(field.getType()))
 					field.set(instance, narrovingNumberConversion(field.getType(), (Number) fieldValue));
 				else
@@ -448,10 +505,10 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 
 	@Override
 	public String toString() {
-		return super.toString()+"{" +
+		return super.toString() + "{" +
 				"\nentityClass=" + entityClass +
 				",\n fields=" + fields +
-				",\n fieldSerializers=" + fieldSerializers +
+				",\n fieldSerializers=" + serializeManager +
 				",\n fieldsCount=" + fieldsCount +
 				",\n keys=" + keys +
 				",\n indexMap=" + indexMap +

@@ -161,16 +161,45 @@ public class EntityDaoTest {
 		for (int i = 0; i < 100; i++) {
 			MockManyEntity mockMany = new MockManyEntity();
 			mockMany.setId((long) i);
-			if (i%2==0) {
+			if (i % 2 == 0) {
 				linkedToTestMockCount++;
 				mockMany.setParent(mock);
-			}
-			else
+			} else
 				mockMany.setMockEntityId(10L);
 			daoManyMock.save(mockMany);
 		}
 		Assert.assertEquals(linkedToTestMockCount, mock.getEntities().size());
 		daoMock.drop(mock);
+	}
+
+	@Test
+	public void testProperties() throws Exception {
+		Long id = 20L;
+		DAO<MockEntity> daoMock = DAOPool.by(MockEntity.class);
+		String address = "";
+		MockEntity mock = new MockEntity();
+		mock.setId(id);
+		mock.setF2(0);
+		mock.setAddressProperty(address);
+		MockProperty property = new MockProperty();
+		property.setField1("Hello");
+		property.setField2("World");
+		property.setField3(20);
+		mock.setMockProperty(property);
+		//System.out.println("Property: address: "+mock.getAddressProperty());
+		property.setField3(30);
+		Assert.assertEquals(20, (int) mock.getMockProperty().field3);
+		mock.setMockProperty(property);
+		Assert.assertEquals(30, (int) mock.getMockProperty().field3);
+		daoMock.save(mock);
+		mock = daoMock.one(id);
+		property.setField3(40);
+		mock.setMockProperty(property);
+		Assert.assertEquals(40, (int) mock.getMockProperty().field3);
+		Assert.assertEquals("Hello", mock.getMockProperty().getField1());
+		//System.out.println("Property: address: "+mock.getAddressProperty());
+		//System.out.println("Property: mock_property: "+mock.getMockProperty());
+
 	}
 
 }

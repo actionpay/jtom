@@ -4,7 +4,7 @@ import io.actionpay.jtom.annotations.*;
 import io.actionpay.jtom.tarantool.IndexType;
 
 /**
- * Created by Khakimov Artur on 27.05.2015.
+ * @author Artur Khakimov<djion@ya.ru>
  */
 @Entity(space = "test_many_entity"
 		, connection = "keeper")

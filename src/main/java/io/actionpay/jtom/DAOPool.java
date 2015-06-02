@@ -1,8 +1,11 @@
 package io.actionpay.jtom;
 
 import io.actionpay.jtom.annotations.Entity;
+import io.actionpay.jtom.annotations.Properties;
+import io.actionpay.jtom.annotations.Property;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Dao pool
@@ -10,7 +13,8 @@ import java.util.HashMap;
  * @author Artur Khakimov <djion@ya.ru>
  */
 public class DAOPool {
-	static HashMap<Class<?>, DAO> daoPool = new HashMap<>();
+	static Map<Class<?>, DAO> daoPool = new HashMap<>();
+	static Map<Class<?>, Map<String,DAO>> daoProperties = new HashMap<>();
 
 	static {
 		/**
@@ -32,8 +36,8 @@ public class DAOPool {
 	 * @return DAO
 	 * @throws Exception depends on DAO Engine
 	 */
-	static DAO buildDaoByEntityClass(Class<?> clazz) throws Exception {
-		return (DAO) ConnectionPool.connection(clazz.getDeclaredAnnotation(Entity.class).connection()).daoClass()
+	static <T> DAO<T> buildDaoByEntityClass(Class<T> clazz) throws Exception {
+		return (DAO<T>) ConnectionPool.connection(clazz.getDeclaredAnnotation(Entity.class).connection()).daoClass()
 				.getMethod("getByClass", Class.class).invoke(null, clazz);
 	}
 
@@ -48,4 +52,5 @@ public class DAOPool {
 		daoPool.putIfAbsent(clazz, buildDaoByEntityClass(clazz));
 		return daoPool.get(clazz);
 	}
+
 }

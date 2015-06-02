@@ -117,4 +117,8 @@ public interface DAO<T> {
 	 * @throws Exception
 	 */
 	List indexToList(Integer index, T entity) throws Exception;
+
+	<T2> void setProperty(T entity, String propertyName, T2 value, Class<T2> propertyClass) throws Exception;
+
+	<T2> T2 getProperty(T entity, String propertyName, Class<T2> propertyClass) throws Exception;
 }
