@@ -88,11 +88,9 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 	}
 
 	private void createPropertySpace(Property property) throws Exception {
-		Integer index0keysCount = keys.get(0).size();
 		StringBuilder query = new StringBuilder();
 		query.append("box.schema.space.create('").append(property.space()).append("')\n")
 				.append(buildSpaceIndexCreateEvalExpression(0, property.space(), true));
-		System.out.println(query);
 		((TarantoolConnection) propertyMapConnection.get(property.space())).eval(query.toString());
 	}
 
@@ -145,7 +143,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 	 * @throws Exception if some Tarantool magic don't work
 	 */
 	private void initSpaceId() throws Exception {
-		spaceId = (Integer) getSpaceId(link, space);
+		spaceId = getSpaceId(link, space);
 
 	}
 
@@ -413,8 +411,7 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 
 		TarantoolConnection connection = ((TarantoolConnection) propertyMapConnection.get(propertyName));
 		List data = (List) connection.select(propertyMapSpace.get(propertyName), 0, indexToList(0, entity), 0, 1, 2).get(0);
-		List result = (List) data.subList(keys.get(0).size(), data.size());
-
+		List result = data.subList(keys.get(0).size(), data.size());
 		if (serializeManager.containsKey(propertyClass))
 			return (T2) serializeManager.unmarshal(propertyClass, result);
 		else
