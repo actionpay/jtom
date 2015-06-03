@@ -399,7 +399,11 @@ public class TarantoolImpl<T> extends CallHandlerImpl implements DAO<T>, CallHan
 	@Override
 	public <T2> void setProperty(T entity, String propertyName, T2 value, Class<T2> propertyClass) throws Exception {
 		List data = indexToList(0, entity);
-		data.add(serializeManager.marshal(propertyClass, value));
+		Object serializedValue = serializeManager.marshal(propertyClass, value);
+		if (serializedValue instanceof List)
+			data.addAll((List)serializedValue);
+		else
+			data.add(serializedValue);
 		TarantoolConnection connection = ((TarantoolConnection) propertyMapConnection.get(propertyName));
 		connection.replace(propertyMapSpace.get(propertyName), data);
 	}

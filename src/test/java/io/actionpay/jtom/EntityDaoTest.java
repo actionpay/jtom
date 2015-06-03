@@ -176,15 +176,15 @@ public class EntityDaoTest {
 	public void testProperties() throws Exception {
 		Long id = 20L;
 		DAO<MockEntity> daoMock = DAOPool.by(MockEntity.class);
-		String address = "";
+		String address = "my address";
 		MockEntity mock = new MockEntity();
-		mock.setId(id);
-		mock.setF2(0);
-		mock.setAddressProperty(address);
+		mock.setId(id)
+			.setF2(0)
+			.setAddressProperty(address);
 		MockProperty property = new MockProperty();
-		property.setField1("Hello");
-		property.setField2("World");
-		property.setField3(20);
+		property.setField1("Hello")
+			.setField2("World")
+			.setField3(20);
 		mock.setMockProperty(property);
 		//System.out.println("Property: address: "+mock.getAddressProperty());
 		property.setField3(30);
