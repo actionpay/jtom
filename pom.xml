@@ -15,9 +15,9 @@
     </repositories>
 
     <scm>
-        <connection>scm:git:git@github.com:AdOnWeb/jtom.git</connection>
-        <url>scm:git:git@github.com:AdOnWeb/jtom.git</url>
-        <developerConnection>scm:git:git@github.com:AdOnWeb/jtom.git</developerConnection>
+        <connection>scm:git:git@github.com:actionpay/jtom.git</connection>
+        <url>scm:git:git@github.com:actionpay/jtom.git</url>
+        <developerConnection>scm:git:git@github.com:actionpay/jtom.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
@@ -81,7 +81,7 @@
                     <branch>refs/heads/mvn-repo</branch>                       <!-- remote branch name -->
                     <includes><include>**/*</include></includes>
                     <repositoryName>jtom</repositoryName>      <!-- github repo name -->
-                    <repositoryOwner>AdOnWeb</repositoryOwner>    <!-- github username  -->
+                    <repositoryOwner>actionpay</repositoryOwner>    <!-- github username  -->
                 </configuration>
                 <executions>
                     <!-- run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase -->
