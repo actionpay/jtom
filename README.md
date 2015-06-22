@@ -13,9 +13,10 @@ Example:
 ConnectionPool.init(Arrays.asList(
              new ConnectionInfo(TarantoolConnection.class, "tarantool_connection_1", host1, port1, login1, password1),
              new ConnectionInfo(TarantoolConnection.class, "tarantool_connection_2", host2, port2, login2, password2)));
+```
 
 ConnectionInfo contain information about connection type, name, host, port, login and password, use it to init pool
-```
+
 
 Entities:
 Mark @Entity your entities to link it to Tarantool spaces.
